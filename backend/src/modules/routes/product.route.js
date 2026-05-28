@@ -1,0 +1,9 @@
+import express from "express";
+import productController from "../controllers/product.controller.js";
+
+const router = express.Router();
+
+router.get("/", productController.getProducts);
+router.get("/:productId", productController.getProductDetail);
+
+export default router;
