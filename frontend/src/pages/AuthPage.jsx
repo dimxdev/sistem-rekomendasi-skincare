@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, registerUser } from "../api/auth";
+import { getLoggedInRedirectPath, loginUser, registerUser } from "../api/auth";
 
 function LoginForm({ onSwitch }) {
   const navigate = useNavigate();
@@ -357,6 +357,14 @@ function RegisterForm({ onSwitch }) {
 function AuthPage({ onClose }) {
   const [mode, setMode] = useState("login"); // "login" | "register"
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const redirectPath = getLoggedInRedirectPath();
+
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [navigate]);
 
   const handleClose = () => {
     if (onClose) {

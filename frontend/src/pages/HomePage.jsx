@@ -5,28 +5,13 @@ import Footer from "../components/Footer";
 import { isAuthenticated } from "../api/auth";
 import { addFavorite, getFavorites, removeFavorite } from "../api/favorites";
 import { getProducts } from "../api/products";
+import {
+  getConcerns,
+  getCountries,
+  getProductTypes,
+  getSkinTypes,
+} from "../api/masterData";
 import { resolveAssetUrl } from "../lib/asset";
-
-const filterOptions = {
-  COUNTRY: ["Korea", "Japan", "France", "USA", "UK"],
-  "PRODUCT TYPE": [
-    "Cleanser",
-    "Toner",
-    "Serum",
-    "Moisturizer",
-    "Mask",
-    "Sunscreen",
-  ],
-  "SKIN TYPE": ["Normal", "Dry", "Oily", "Combination", "Sensitive"],
-  "SKIN CONCERN": [
-    "Acne",
-    "Anti-Aging",
-    "Dark Spots",
-    "Dryness",
-    "Dullness",
-    "Redness",
-  ],
-};
 
 function HomePage() {
   const navigate = useNavigate();
@@ -36,6 +21,12 @@ function HomePage() {
   const [selectedFilters, setSelectedFilters] = useState({});
   const [searchFocused, setSearchFocused] = useState(false);
   const [products, setProducts] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({
+    COUNTRY: [],
+    "PRODUCT TYPE": [],
+    "SKIN TYPE": [],
+    "SKIN CONCERN": [],
+  });
   const [page, setPage] = useState(1);
   const [limit] = useState(8);
   const [isLoading, setIsLoading] = useState(true);
@@ -155,6 +146,44 @@ function HomePage() {
     };
 
     fetchFavorites();
+  }, []);
+
+  useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        const [countries, productTypes, skinTypes, concerns] =
+          await Promise.all([
+            getCountries(),
+            getProductTypes(),
+            getSkinTypes(),
+            getConcerns(),
+          ]);
+
+        setFilterOptions({
+          COUNTRY: (Array.isArray(countries) ? countries : [])
+            .map((item) => item.namaNegara || item.kodeNegara || "")
+            .filter(Boolean),
+          "PRODUCT TYPE": (Array.isArray(productTypes) ? productTypes : [])
+            .map((item) => item.nama || "")
+            .filter(Boolean),
+          "SKIN TYPE": (Array.isArray(skinTypes) ? skinTypes : [])
+            .map((item) => item.nama || "")
+            .filter(Boolean),
+          "SKIN CONCERN": (Array.isArray(concerns) ? concerns : [])
+            .map((item) => item.nama || "")
+            .filter(Boolean),
+        });
+      } catch {
+        setFilterOptions({
+          COUNTRY: [],
+          "PRODUCT TYPE": [],
+          "SKIN TYPE": [],
+          "SKIN CONCERN": [],
+        });
+      }
+    };
+
+    fetchMasterData();
   }, []);
 
   useEffect(() => {

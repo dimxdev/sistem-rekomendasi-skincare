@@ -28,3 +28,11 @@ export async function updateMe(payload) {
 export function isAuthenticated() {
   return Boolean(localStorage.getItem("token"));
 }
+
+export function getLoggedInRedirectPath() {
+  if (!isAuthenticated()) {
+    return null;
+  }
+
+  return localStorage.getItem("admin") ? "/admin/dashboard" : "/profile";
+}

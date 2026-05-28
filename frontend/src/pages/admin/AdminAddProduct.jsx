@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/AdminSidebar";
 import { createAdminProduct } from "../../api/adminProducts";
-import { getProducts } from "../../api/products";
+import {
+  getConcerns,
+  getCountries,
+  getProductTypes,
+  getSkinTypes,
+} from "../../api/masterData";
 
 // ── Step Badge ─────────────────────────────────────────────
 function StepBadge({ number }) {
@@ -137,46 +142,36 @@ export default function AdminAddProduct() {
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const data = await getProducts({ page: 1, limit: 200 });
-        const list = Array.isArray(data) ? data : data?.data || [];
-
-        const countriesMap = new Map();
-        const typesMap = new Map();
-        const skinMap = new Map();
-        const concernMap = new Map();
-
-        list.forEach((item) => {
-          if (item?.country?.id) {
-            const label =
-              item.country.namaNegara || item.country.kodeNegara || "";
-            if (label) countriesMap.set(item.country.id, label);
-          }
-
-          if (item?.productType?.id) {
-            const label = item.productType.nama || "";
-            if (label) typesMap.set(item.productType.id, label);
-          }
-
-          (item?.skinTypes || []).forEach((entry) => {
-            if (entry?.skinType?.id) {
-              const label = entry.skinType.nama || "";
-              if (label) skinMap.set(entry.skinType.id, label);
-            }
-          });
-
-          (item?.concerns || []).forEach((entry) => {
-            if (entry?.concern?.id) {
-              const label = entry.concern.nama || "";
-              if (label) concernMap.set(entry.concern.id, label);
-            }
-          });
-        });
+        const [countries, productTypes, skinTypes, concerns] =
+          await Promise.all([
+            getCountries(),
+            getProductTypes(),
+            getSkinTypes(),
+            getConcerns(),
+          ]);
 
         setOptions({
-          countries: Array.from(countriesMap, ([id, label]) => ({ id, label })),
-          productTypes: Array.from(typesMap, ([id, label]) => ({ id, label })),
-          skinTypes: Array.from(skinMap, ([id, label]) => ({ id, label })),
-          concerns: Array.from(concernMap, ([id, label]) => ({ id, label })),
+          countries: (Array.isArray(countries) ? countries : [])
+            .map((item) => ({
+              id: item.id,
+              label: item.namaNegara || item.kodeNegara || "",
+            }))
+            .filter((item) => item.id && item.label),
+          productTypes: (Array.isArray(productTypes) ? productTypes : [])
+            .map((item) => ({ id: item.id, label: item.nama || "" }))
+            .filter((item) => item.id && item.label),
+          skinTypes: (Array.isArray(skinTypes) ? skinTypes : [])
+            .map((item) => ({
+              id: item.id,
+              label: item.nama || "",
+            }))
+            .filter((item) => item.id && item.label),
+          concerns: (Array.isArray(concerns) ? concerns : [])
+            .map((item) => ({
+              id: item.id,
+              label: item.nama || "",
+            }))
+            .filter((item) => item.id && item.label),
         });
       } catch {
         // Leave empty options if load fails.

@@ -9,6 +9,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminAddProduct from "./pages/admin/AdminAddProduct";
 import AdminEditProduct from "./pages/admin/AdminEditProduct";
+import AdminUsers from "./pages/admin/AdminUsers";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/addproduct" element={<AdminAddProduct />} />
         <Route
           path="/admin/products/:productId/edit"

@@ -37,7 +37,7 @@ class ProductService {
     };
   }
 
-  async getProductDetail(productId) {
+  async getProductDetail(productId, query = {}) {
     if (!productId) {
       throw new Error("Product id wajib diisi!");
     }

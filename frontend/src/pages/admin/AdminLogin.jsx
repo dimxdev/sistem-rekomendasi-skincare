@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import serumImage from "../../assets/serum.webp";
-import { loginAdmin } from "../../api/auth";
+import { getLoggedInRedirectPath, loginAdmin } from "../../api/auth";
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -11,6 +11,14 @@ function AdminLogin() {
   const [focusedField, setFocusedField] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const redirectPath = getLoggedInRedirectPath();
+
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

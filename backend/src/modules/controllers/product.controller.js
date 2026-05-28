@@ -17,7 +17,10 @@ class ProductController {
     try {
       const { productId } = req.params;
 
-      const product = await productService.getProductDetail(productId);
+      const product = await productService.getProductDetail(
+        productId,
+        req.query,
+      );
 
       res.status(200).json(product);
     } catch (error) {
