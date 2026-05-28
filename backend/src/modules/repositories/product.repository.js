@@ -2,9 +2,20 @@ import prisma from "../../db/index.js";
 
 class ProductRepository {
   async getProducts(filters) {
-    const { search, country, type, skinType, concern, skip, limit } = filters;
+    const {
+      search,
+      country,
+      type,
+      skinType,
+      concern,
+      includeInactive,
+      skip,
+      limit,
+    } = filters;
 
-    const where = {};
+    const where = {
+      ...(includeInactive ? {} : { isActive: true }),
+    };
 
     // SEARCH PRODUCT NAME
     if (search) {
@@ -95,9 +106,12 @@ class ProductRepository {
   }
 
   async countProducts(filters) {
-    const { search, country, type, skinType, concern } = filters;
+    const { search, country, type, skinType, concern, includeInactive } =
+      filters;
 
-    const where = {};
+    const where = {
+      ...(includeInactive ? {} : { isActive: true }),
+    };
 
     // SEARCH
     if (search) {
@@ -160,7 +174,7 @@ class ProductRepository {
     });
   }
 
-  async getProductDetail(productId) {
+  async getProductDetail(productId, includeInactive = false) {
     const product = await prisma.product.findUnique({
       where: {
         id: productId,
@@ -186,6 +200,14 @@ class ProductRepository {
         favorites: true,
       },
     });
+
+    if (!product) {
+      return null;
+    }
+
+    if (!includeInactive && !product.isActive) {
+      return null;
+    }
 
     return product;
   }

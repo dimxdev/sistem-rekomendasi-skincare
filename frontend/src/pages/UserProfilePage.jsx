@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { resolveAssetUrl } from "../lib/asset";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { getMe, isAuthenticated, updateMe } from "../api/auth";
@@ -79,7 +80,7 @@ const getStoredProfileSnapshot = () => {
 function UserProfilePage() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(
-    () => getStoredProfileSnapshot().currentUser
+    () => getStoredProfileSnapshot().currentUser,
   );
   const [favoritesPreview, setFavoritesPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +88,7 @@ function UserProfilePage() {
   const [profileError, setProfileError] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(
-    () => getStoredProfileSnapshot().formData
+    () => getStoredProfileSnapshot().formData,
   );
   const [focusedField, setFocusedField] = useState(null);
   const [signOutConfirm, setSignOutConfirm] = useState(false);
@@ -165,7 +166,7 @@ function UserProfilePage() {
       setEditMode(false);
     } catch (err) {
       setProfileError(
-        err?.response?.data?.error || "Gagal memperbarui profil."
+        err?.response?.data?.error || "Gagal memperbarui profil.",
       );
     } finally {
       setIsSaving(false);
@@ -287,7 +288,7 @@ function UserProfilePage() {
                 >
                   <div className="relative bg-[#FAF8F5] aspect-square overflow-hidden">
                     <img
-                      src={product.imageUrl || product.image}
+                      src={resolveAssetUrl(product.imageUrl || product.image)}
                       alt={product.namaProduk || product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />

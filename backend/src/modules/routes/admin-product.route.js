@@ -11,6 +11,17 @@ router.post(
   upload.single("image"),
   adminProductController.createProduct,
 );
+router.put(
+  "/:productId",
+  adminMiddleware,
+  upload.single("image"),
+  adminProductController.updateProduct,
+);
+router.patch(
+  "/:productId/status",
+  adminMiddleware,
+  adminProductController.toggleProductStatus,
+);
 router.delete(
   "/:productId",
   adminMiddleware,

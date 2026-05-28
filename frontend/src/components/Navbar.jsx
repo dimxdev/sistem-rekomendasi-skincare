@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../api/auth";
 
 function Navbar({
@@ -13,9 +13,13 @@ function Navbar({
   active = null,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [internalValue, setInternalValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const isLoggedIn = isAuthenticated();
+  const isAdminSession = Boolean(localStorage.getItem("admin"));
+  const hideUserActions =
+    isAdminSession && !location.pathname.startsWith("/admin");
 
   const value = searchValue ?? internalValue;
   const focused = searchFocused ?? isFocused;
@@ -106,41 +110,49 @@ function Navbar({
       </div>
 
       <div className="flex items-center gap-5 ml-auto">
-        <div className="relative flex flex-col items-center">
-          <button
-            onClick={handleFavoriteClick}
-            className={`material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity ${
-              favoriteActive ? "text-secondary" : "text-on-surface-variant"
-            }`}
-            style={{
-              fontVariationSettings: favoriteActive ? "'FILL' 1" : "'FILL' 0",
-            }}
-          >
-            favorite
-          </button>
-          {favoriteActive && (
-            <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-secondary" />
-          )}
-        </div>
-        {isLoggedIn ? (
-          <button
-            onClick={handleProfileClick}
-            className={`material-symbols-outlined cursor-pointer hover:text-secondary transition-colors ${
-              profileActive ? "text-secondary" : "text-on-surface-variant"
-            }`}
-            style={{
-              fontVariationSettings: profileActive ? "'FILL' 1" : "'FILL' 0",
-            }}
-          >
-            person
-          </button>
-        ) : (
-          <button
-            onClick={() => navigate("/auth")}
-            className="border border-outline-variant text-on-surface-variant font-body text-[10px] tracking-[0.2em] uppercase px-4 py-2 hover:border-outline hover:text-on-surface transition-colors cursor-pointer"
-          >
-            Login
-          </button>
+        {!hideUserActions && (
+          <>
+            <div className="relative flex flex-col items-center">
+              <button
+                onClick={handleFavoriteClick}
+                className={`material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity ${
+                  favoriteActive ? "text-secondary" : "text-on-surface-variant"
+                }`}
+                style={{
+                  fontVariationSettings: favoriteActive
+                    ? "'FILL' 1"
+                    : "'FILL' 0",
+                }}
+              >
+                favorite
+              </button>
+              {favoriteActive && (
+                <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-secondary" />
+              )}
+            </div>
+            {isLoggedIn ? (
+              <button
+                onClick={handleProfileClick}
+                className={`material-symbols-outlined cursor-pointer hover:text-secondary transition-colors ${
+                  profileActive ? "text-secondary" : "text-on-surface-variant"
+                }`}
+                style={{
+                  fontVariationSettings: profileActive
+                    ? "'FILL' 1"
+                    : "'FILL' 0",
+                }}
+              >
+                person
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/auth")}
+                className="border border-outline-variant text-on-surface-variant font-body text-[10px] tracking-[0.2em] uppercase px-4 py-2 hover:border-outline hover:text-on-surface transition-colors cursor-pointer"
+              >
+                Login
+              </button>
+            )}
+          </>
         )}
       </div>
     </header>

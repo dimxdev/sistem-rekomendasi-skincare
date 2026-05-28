@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/AdminSidebar";
 import { createAdminProduct } from "../../api/adminProducts";
+import { getProducts } from "../../api/products";
 
 // ── Step Badge ─────────────────────────────────────────────
 function StepBadge({ number }) {
@@ -90,6 +91,12 @@ export default function AdminAddProduct() {
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [options, setOptions] = useState({
+    countries: [],
+    productTypes: [],
+    skinTypes: [],
+    concerns: [],
+  });
 
   // Form state
   const [form, setForm] = useState({
@@ -101,9 +108,17 @@ export default function AdminAddProduct() {
     countryId: "",
     productTypeId: "",
   });
+  const [skinTypeIds, setSkinTypeIds] = useState([]);
+  const [concernIds, setConcernIds] = useState([]);
 
   const setField = (key) => (val) =>
     setForm((prev) => ({ ...prev, [key]: val }));
+
+  const toggleSelection = (listSetter, list, id) => {
+    listSetter(
+      list.includes(id) ? list.filter((item) => item !== id) : [...list, id],
+    );
+  };
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -118,6 +133,58 @@ export default function AdminAddProduct() {
     const file = e.dataTransfer.files[0];
     if (file) handleFileChange(file);
   };
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const data = await getProducts({ page: 1, limit: 200 });
+        const list = Array.isArray(data) ? data : data?.data || [];
+
+        const countriesMap = new Map();
+        const typesMap = new Map();
+        const skinMap = new Map();
+        const concernMap = new Map();
+
+        list.forEach((item) => {
+          if (item?.country?.id) {
+            const label =
+              item.country.namaNegara || item.country.kodeNegara || "";
+            if (label) countriesMap.set(item.country.id, label);
+          }
+
+          if (item?.productType?.id) {
+            const label = item.productType.nama || "";
+            if (label) typesMap.set(item.productType.id, label);
+          }
+
+          (item?.skinTypes || []).forEach((entry) => {
+            if (entry?.skinType?.id) {
+              const label = entry.skinType.nama || "";
+              if (label) skinMap.set(entry.skinType.id, label);
+            }
+          });
+
+          (item?.concerns || []).forEach((entry) => {
+            if (entry?.concern?.id) {
+              const label = entry.concern.nama || "";
+              if (label) concernMap.set(entry.concern.id, label);
+            }
+          });
+        });
+
+        setOptions({
+          countries: Array.from(countriesMap, ([id, label]) => ({ id, label })),
+          productTypes: Array.from(typesMap, ([id, label]) => ({ id, label })),
+          skinTypes: Array.from(skinMap, ([id, label]) => ({ id, label })),
+          concerns: Array.from(concernMap, ([id, label]) => ({ id, label })),
+        });
+      } catch {
+        // Leave empty options if load fails.
+      }
+    };
+
+    loadOptions();
+  }, []);
 
   const handleSave = async () => {
     setError("");
@@ -146,6 +213,14 @@ export default function AdminAddProduct() {
 
     if (form.imageUrl) {
       payload.append("imageUrl", form.imageUrl);
+    }
+
+    if (skinTypeIds.length > 0) {
+      payload.append("skinTypeIds", JSON.stringify(skinTypeIds));
+    }
+
+    if (concernIds.length > 0) {
+      payload.append("concernIds", JSON.stringify(concernIds));
     }
 
     if (imageFile) {
@@ -298,18 +373,95 @@ export default function AdminAddProduct() {
                   type="url"
                 />
                 <div className="grid grid-cols-2 gap-5">
-                  <AdminInput
-                    label="COUNTRY ID"
-                    value={form.countryId}
-                    onChange={setField("countryId")}
-                    placeholder="UUID country"
-                  />
-                  <AdminInput
-                    label="PRODUCT TYPE ID"
-                    value={form.productTypeId}
-                    onChange={setField("productTypeId")}
-                    placeholder="UUID product type"
-                  />
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      className="font-admin-label text-[10px]"
+                      style={{ color: "var(--color-admin-primary-container)" }}
+                    >
+                      COUNTRY
+                    </label>
+                    <div
+                      className="relative flex items-center"
+                      style={{
+                        borderBottom:
+                          "1px solid var(--color-admin-outline-variant)",
+                      }}
+                    >
+                      <select
+                        value={form.countryId}
+                        onChange={(e) => setField("countryId")(e.target.value)}
+                        className="w-full appearance-none bg-transparent font-admin-body-md outline-none py-2 pr-8 cursor-pointer"
+                        style={{
+                          color: form.countryId
+                            ? "var(--color-admin-on-surface)"
+                            : "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select country...
+                        </option>
+                        {options.countries.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span
+                        className="material-symbols-outlined text-[18px] absolute right-0 pointer-events-none"
+                        style={{
+                          color: "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        keyboard_arrow_down
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      className="font-admin-label text-[10px]"
+                      style={{ color: "var(--color-admin-primary-container)" }}
+                    >
+                      PRODUCT TYPE
+                    </label>
+                    <div
+                      className="relative flex items-center"
+                      style={{
+                        borderBottom:
+                          "1px solid var(--color-admin-outline-variant)",
+                      }}
+                    >
+                      <select
+                        value={form.productTypeId}
+                        onChange={(e) =>
+                          setField("productTypeId")(e.target.value)
+                        }
+                        className="w-full appearance-none bg-transparent font-admin-body-md outline-none py-2 pr-8 cursor-pointer"
+                        style={{
+                          color: form.productTypeId
+                            ? "var(--color-admin-on-surface)"
+                            : "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select type...
+                        </option>
+                        {options.productTypes.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span
+                        className="material-symbols-outlined text-[18px] absolute right-0 pointer-events-none"
+                        style={{
+                          color: "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        keyboard_arrow_down
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <AdminInput
                   label="IMAGE URL (optional)"
@@ -318,6 +470,90 @@ export default function AdminAddProduct() {
                   placeholder="https://image.jpg"
                   type="url"
                 />
+
+                <div className="flex flex-col gap-2">
+                  <span
+                    className="font-admin-label text-[10px]"
+                    style={{ color: "var(--color-admin-primary-container)" }}
+                  >
+                    SKIN TYPES
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {options.skinTypes.map((item) => (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-2 border px-3 py-2 cursor-pointer"
+                        style={{
+                          borderColor: skinTypeIds.includes(item.id)
+                            ? "var(--color-admin-primary)"
+                            : "var(--color-admin-outline-variant)",
+                          backgroundColor: skinTypeIds.includes(item.id)
+                            ? "var(--color-admin-primary)"
+                            : "transparent",
+                          color: skinTypeIds.includes(item.id)
+                            ? "var(--color-admin-on-primary)"
+                            : "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={skinTypeIds.includes(item.id)}
+                          onChange={() =>
+                            toggleSelection(
+                              setSkinTypeIds,
+                              skinTypeIds,
+                              item.id,
+                            )
+                          }
+                        />
+                        <span className="font-admin-data text-[11px]">
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span
+                    className="font-admin-label text-[10px]"
+                    style={{ color: "var(--color-admin-primary-container)" }}
+                  >
+                    SKIN CONCERNS
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {options.concerns.map((item) => (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-2 border px-3 py-2 cursor-pointer"
+                        style={{
+                          borderColor: concernIds.includes(item.id)
+                            ? "var(--color-admin-primary)"
+                            : "var(--color-admin-outline-variant)",
+                          backgroundColor: concernIds.includes(item.id)
+                            ? "var(--color-admin-primary)"
+                            : "transparent",
+                          color: concernIds.includes(item.id)
+                            ? "var(--color-admin-on-primary)"
+                            : "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={concernIds.includes(item.id)}
+                          onChange={() =>
+                            toggleSelection(setConcernIds, concernIds, item.id)
+                          }
+                        />
+                        <span className="font-admin-data text-[11px]">
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </SectionCard>
           </div>

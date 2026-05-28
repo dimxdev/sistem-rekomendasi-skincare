@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import { isAuthenticated } from "../api/auth";
 import { addFavorite, getFavorites, removeFavorite } from "../api/favorites";
 import { getProducts } from "../api/products";
+import { resolveAssetUrl } from "../lib/asset";
 
 const filterOptions = {
   COUNTRY: ["Korea", "Japan", "France", "USA", "UK"],
@@ -362,7 +363,7 @@ function HomePage() {
               {/* Image */}
               <div className="relative bg-[#FAF8F5] aspect-square overflow-hidden">
                 <img
-                  src={product.imageUrl || product.image}
+                  src={resolveAssetUrl(product.imageUrl || product.image)}
                   alt={getProductName(product)}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

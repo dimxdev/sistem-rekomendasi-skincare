@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/AdminSidebar";
 import { getProducts } from "../../api/products";
-import { deleteAdminProduct } from "../../api/adminProducts";
+import {
+  deleteAdminProduct,
+  toggleAdminProductStatus,
+} from "../../api/adminProducts";
+import { resolveAssetUrl } from "../../lib/asset";
 
 const COUNTRIES = [
   "All Countries",
@@ -90,6 +94,7 @@ function AdminProducts() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -97,7 +102,11 @@ function AdminProducts() {
       setError("");
 
       try {
-        const data = await getProducts({ page: 1, limit: 200 });
+        const data = await getProducts({
+          page: 1,
+          limit: 200,
+          includeInactive: true,
+        });
         const list = Array.isArray(data) ? data : data?.data || [];
         const normalized = list.map((item) => ({
           id: item.id,
@@ -111,8 +120,8 @@ function AdminProducts() {
             "-",
           type: item.productType?.nama || item.type || "-",
           favorites: item.favorites?.length || 0,
-          status: "active",
-          image: item.imageUrl || item.image || null,
+          status: item.isActive ? "active" : "hidden",
+          image: resolveAssetUrl(item.imageUrl || item.image || null),
         }));
         setProducts(normalized);
       } catch (err) {
@@ -159,6 +168,27 @@ function AdminProducts() {
   const handleDelete = (product) => {
     setDeleteTarget(product);
     setShowDeleteModal(true);
+  };
+
+  const handleToggleStatus = async (product) => {
+    setTogglingId(product.id);
+    setError("");
+
+    try {
+      const nextIsActive = product.status !== "active";
+      await toggleAdminProductStatus(product.id, nextIsActive);
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id
+            ? { ...item, status: nextIsActive ? "active" : "hidden" }
+            : item,
+        ),
+      );
+    } catch (err) {
+      setError(err?.response?.data?.error || "Gagal mengubah status produk.");
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const confirmDelete = async () => {
@@ -509,13 +539,25 @@ function AdminProducts() {
                 <div className="flex items-center gap-2">
                   <button
                     className="material-symbols-outlined text-[18px] cursor-pointer transition-colors hover:opacity-70"
-                    style={{ color: "var(--color-admin-on-surface-variant)" }}
+                    style={{ color: "var(--color-admin-primary)" }}
+                    onClick={() => handleToggleStatus(product)}
+                    disabled={togglingId === product.id}
+                    title={
+                      product.status === "active"
+                        ? "Set inactive"
+                        : "Set active"
+                    }
                   >
-                    visibility
+                    {product.status === "active"
+                      ? "visibility"
+                      : "visibility_off"}
                   </button>
                   <button
                     className="material-symbols-outlined text-[18px] cursor-pointer transition-colors hover:opacity-70"
                     style={{ color: "var(--color-admin-on-surface-variant)" }}
+                    onClick={() =>
+                      navigate(`/admin/products/${product.id}/edit`)
+                    }
                   >
                     edit
                   </button>

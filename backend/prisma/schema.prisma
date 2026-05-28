@@ -78,6 +78,8 @@ model Product {
   brand             String
   manfaatUtama      String
 
+  isActive          Boolean   @default(true)
+
   tokoOnlineUrl     String
   imageUrl          String?
 

@@ -29,7 +29,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("user");
       localStorage.removeItem("token");
 
-      window.location.href = "/login";
+      window.location.href = "/auth";
     }
 
     if (error.response?.status === 403) {

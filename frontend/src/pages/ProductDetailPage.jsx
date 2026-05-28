@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { resolveAssetUrl } from "../lib/asset";
 import { getProductDetail } from "../api/productDetail";
 import { addFavorite, removeFavorite } from "../api/favorites";
 
@@ -11,7 +12,7 @@ function ProductDetailPage() {
   const [error, setError] = useState("");
   const [activeImage, setActiveImage] = useState(0);
   const [liked, setLiked] = useState(false);
-  const images = product?.imageUrl ? [product.imageUrl] : [];
+  const images = product?.imageUrl ? [resolveAssetUrl(product.imageUrl)] : [];
   const name = product?.namaProduk || product?.name || "";
   const brand = product?.brand || "";
   const category = product?.productType?.nama || product?.type || "";

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { resolveAssetUrl } from "../lib/asset";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { getFavorites, removeFavorite } from "../api/favorites";
-
 
 const filterOptions = {
   COUNTRY: ["Korea", "Japan", "France", "USA", "UK"],
@@ -249,7 +249,7 @@ function FilledState({ products, onRemove }) {
               {/* Image */}
               <div className="relative bg-[#FAF8F5] aspect-square overflow-hidden">
                 <img
-                  src={product.imageUrl || product.image}
+                  src={resolveAssetUrl(product.imageUrl || product.image)}
                   alt={product.namaProduk || product.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

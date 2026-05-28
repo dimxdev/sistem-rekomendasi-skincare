@@ -6,6 +6,8 @@ class ProductService {
 
     const limit = Number(query.limit) || 10;
 
+    const includeInactive = query.includeInactive === "true";
+
     const skip = (page - 1) * limit;
 
     const filters = {
@@ -14,6 +16,7 @@ class ProductService {
       type: query.type,
       skinType: query.skinType,
       concern: query.concern,
+      includeInactive,
       skip,
       limit,
     };
@@ -39,7 +42,12 @@ class ProductService {
       throw new Error("Product id wajib diisi!");
     }
 
-    const product = await productRepository.getProductDetail(productId);
+    const includeInactive = query.includeInactive === "true";
+
+    const product = await productRepository.getProductDetail(
+      productId,
+      includeInactive,
+    );
 
     if (!product) {
       throw new Error("Product tidak ditemukan!");
