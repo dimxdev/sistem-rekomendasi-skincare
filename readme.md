@@ -117,7 +117,7 @@ npx prisma migrate dev
 ## 6️⃣ Jalankan seed database
 
 ```bash
-npm run seed
+npx prisma db seed
 ```
 
 Seed akan mengisi:
