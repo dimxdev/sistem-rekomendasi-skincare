@@ -1,17 +1,43 @@
 import { useState } from "react";
-import serumImage from "../assets/serum.webp";
+import { useNavigate } from "react-router-dom";
+import serumImage from "../../assets/serum.webp";
+import { loginAdmin } from "../../api/auth";
 
 function AdminLogin() {
-  const [email, setEmail] = useState("");
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => setLoading(false), 1500);
+    setError("");
+
+    try {
+      const result = await loginAdmin({
+        username,
+        password,
+      });
+      const data = result?.data || result || {};
+
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      if (data?.admin) {
+        localStorage.setItem("admin", JSON.stringify(data.admin));
+      }
+
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError(err?.response?.data?.error || "Gagal login admin.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,31 +89,31 @@ function AdminLogin() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            {/* Email */}
+            {/* Username */}
             <div className="flex flex-col gap-2">
               <label
                 className="font-admin-label"
                 style={{ color: "var(--color-admin-primary-container)" }}
               >
-                Email Address
+                Username
               </label>
               <div
                 className="transition-colors duration-200"
                 style={{
                   borderBottom: `1px solid ${
-                    focusedField === "email"
+                    focusedField === "username"
                       ? "var(--color-admin-primary-container)"
                       : "var(--color-admin-outline-variant)"
                   }`,
                 }}
               >
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField("email")}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onFocus={() => setFocusedField("username")}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="admin@lumiere.com"
+                  placeholder="admin"
                   className="w-full bg-transparent font-admin-body-md outline-none py-2"
                   style={{ color: "var(--color-admin-on-surface)" }}
                   required
@@ -137,6 +163,14 @@ function AdminLogin() {
 
             {/* Actions */}
             <div className="flex flex-col gap-4 pt-2">
+              {error && (
+                <p
+                  className="font-admin-data"
+                  style={{ color: "var(--color-admin-error)" }}
+                >
+                  {error}
+                </p>
+              )}
               <div className="flex justify-end">
                 <button
                   type="button"

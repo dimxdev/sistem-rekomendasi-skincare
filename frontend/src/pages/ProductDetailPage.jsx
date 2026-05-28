@@ -11,7 +11,6 @@ function ProductDetailPage() {
   const [error, setError] = useState("");
   const [activeImage, setActiveImage] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [copied, setCopied] = useState(false);
   const images = product?.imageUrl ? [product.imageUrl] : [];
   const name = product?.namaProduk || product?.name || "";
   const brand = product?.brand || "";
@@ -31,9 +30,9 @@ function ProductDetailPage() {
     .filter(Boolean);
   const storeUrl = product?.tokoOnlineUrl || "";
 
-  const handleGetLink = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleBuyNow = () => {
+    if (!storeUrl) return;
+    window.open(storeUrl, "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -232,10 +231,11 @@ function ProductDetailPage() {
           {/* Bottom Action Row */}
           <div className="flex gap-3 px-[52px] py-5 border-t border-soft-beige bg-surface-bright sticky bottom-0">
             <button
-              onClick={handleGetLink}
+              onClick={handleBuyNow}
+              disabled={!storeUrl}
               className="flex-1 bg-gold text-on-primary font-body text-[12px] tracking-[0.12em] uppercase py-4 px-8 hover:opacity-90 transition-opacity cursor-pointer"
             >
-              {copied ? "LINK COPIED!" : "GET LINK"}
+              BUY NOW
             </button>
             <button
               onClick={async () => {

@@ -1,55 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { getFavorites, removeFavorite } from "../api/favorites";
 
-const allProducts = [
-  {
-    id: 1,
-    country: "JAPAN",
-    brand: "SK-II",
-    name: "Facial Treatment Essence",
-    description:
-      "A powerful anti-aging essence that visibly smooths texture and brightens skin.",
-    image:
-      "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab12?w=400&q=80",
-    tags: ["Toner", "Normal", "Anti-Aging"],
-  },
-  {
-    id: 2,
-    country: "FRANCE",
-    brand: "Caudalie",
-    name: "Vinoperfect Radiance Serum",
-    description:
-      "A highly concentrated, oil-free serum that improves radiance and evens skin tone.",
-    image:
-      "https://images.unsplash.com/photo-1570194065650-d99fb4d8a609?w=400&q=80",
-    tags: ["Serum", "Combination", "Dark Spots"],
-  },
-  {
-    id: 3,
-    country: "SOUTH KOREA",
-    brand: "Beauty of Joseon",
-    name: "Dynasty Cream",
-    description:
-      "A luxurious cream enriched with ginseng water and rice bran for deep hydration and a radiant glow.",
-    image:
-      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&q=80",
-    tags: ["Moisturizer", "Dry", "Dullness"],
-  },
-  {
-    id: 4,
-    country: "USA",
-    brand: "Tatcha",
-    name: "The Rice Wash",
-    description:
-      "A softly foaming cleanser with rice powder that washes away impurities without stripping the skin.",
-    image:
-      "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80",
-    tags: ["Cleanser", "Sensitive", "Dryness"],
-  },
-];
 
 const filterOptions = {
   COUNTRY: ["Korea", "Japan", "France", "USA", "UK"],
@@ -72,7 +27,9 @@ const filterOptions = {
   ],
 };
 
-function EmptyState({ onExplore }) {
+function EmptyState() {
+  const navigate = useNavigate();
+
   return (
     <main className="flex-grow flex flex-col items-center justify-center px-8 py-24 text-center">
       <div className="max-w-[440px] flex flex-col items-center gap-5">
@@ -110,7 +67,8 @@ function EmptyState({ onExplore }) {
 
         <div className="pt-6">
           <button
-            onClick={onExplore}
+            type="button"
+            onClick={() => navigate("/")}
             className="bg-primary text-on-primary font-body text-[12px] tracking-[0.12em] uppercase px-10 py-4 hover:bg-on-surface-variant transition-colors duration-300 cursor-pointer"
           >
             EXPLORE PRODUCTS
@@ -145,7 +103,7 @@ function FilledState({ products, onRemove }) {
   return (
     <>
       {/* Page Header */}
-      <section className="pt-[80px] pb-10 px-8 text-center border-b border-outline-variant">
+      <section className="pt-[80px] mt-5 pb-10 px-8 text-center border-b border-outline-variant">
         <span className="font-body text-[11px] tracking-[0.2em] uppercase text-secondary block mb-3">
           YOUR COLLECTION
         </span>
@@ -283,9 +241,10 @@ function FilledState({ products, onRemove }) {
       <main className="flex-1 px-8 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto">
           {products.map((product) => (
-            <div
+            <Link
               key={product.id}
-              className="group bg-surface-container-lowest border border-outline-variant hover:border-outline transition-colors duration-300 flex flex-col"
+              to={`/product/${product.id}`}
+              className="group bg-surface-container-lowest border border-outline-variant hover:border-outline transition-colors duration-300 flex flex-col cursor-pointer"
             >
               {/* Image */}
               <div className="relative bg-[#FAF8F5] aspect-square overflow-hidden">
@@ -296,7 +255,12 @@ function FilledState({ products, onRemove }) {
                 />
                 {/* Remove from favorites */}
                 <button
-                  onClick={() => onRemove(product.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRemove(product.id);
+                  }}
                   className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-surface-bright/80 backdrop-blur-sm hover:bg-surface-bright transition-colors cursor-pointer"
                   aria-label="Remove from favorites"
                 >
@@ -327,11 +291,11 @@ function FilledState({ products, onRemove }) {
                 <p className="font-body text-[13px] text-on-surface-variant leading-relaxed line-clamp-2 flex-1">
                   {product.manfaatUtama || product.description}
                 </p>
-                <button className="mt-4 w-full border border-primary text-primary font-body text-[11px] tracking-[0.12em] uppercase py-3 hover:bg-primary hover:text-on-primary transition-colors duration-300 cursor-pointer">
+                <span className="mt-4 w-full border border-primary text-primary font-body text-[11px] tracking-[0.12em] uppercase py-3 text-center hover:bg-primary hover:text-on-primary transition-colors duration-300">
                   VIEW DETAILS
-                </button>
+                </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </main>
@@ -340,7 +304,6 @@ function FilledState({ products, onRemove }) {
 }
 
 function FavoritesPage() {
-  const navigate = useNavigate();
   const [savedProducts, setSavedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -398,7 +361,7 @@ function FavoritesPage() {
       {!isLoading &&
         !error &&
         (isEmpty ? (
-          <EmptyState onExplore={() => navigate("/")} />
+          <EmptyState />
         ) : (
           <FilledState products={savedProducts} onRemove={handleRemove} />
         ))}

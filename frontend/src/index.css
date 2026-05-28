@@ -145,6 +145,9 @@
 
     /* Sidebar */
     --admin-sidebar-width: 260px;
+
+    background-color: var(--color-admin-background);
+    color: var(--color-admin-on-background);
   }
 }
 

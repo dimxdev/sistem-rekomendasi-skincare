@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getMe, isAuthenticated } from "../api/auth";
+import { getMe, isAuthenticated, updateMe } from "../api/auth";
+import { getFavorites } from "../api/favorites";
 
 const defaultUser = {
   initials: "--",
@@ -11,41 +12,6 @@ const defaultUser = {
   joined: "",
   favoritesCount: 0,
 };
-
-const savedProducts = [
-  {
-    id: 1,
-    country: "FRANCE",
-    brand: "LA MER",
-    name: "Crème de la Mer",
-    image:
-      "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab12?w=400&q=80",
-  },
-  {
-    id: 2,
-    country: "JAPAN",
-    brand: "SK-II",
-    name: "Facial Treatment Essence",
-    image:
-      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&q=80",
-  },
-  {
-    id: 3,
-    country: "SWISS",
-    brand: "LA PRAIRIE",
-    name: "Skin Caviar Luxe Cream",
-    image:
-      "https://images.unsplash.com/photo-1570194065650-d99fb4d8a609?w=400&q=80",
-  },
-  {
-    id: 4,
-    country: "USA",
-    brand: "AUGUSTINUS",
-    name: "The Rich Cream",
-    image:
-      "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80",
-  },
-];
 
 const infoFields = [
   { label: "FULL NAME", key: "name" },
@@ -77,16 +43,52 @@ const getInitials = (name, email) => {
   return "--";
 };
 
+const getStoredProfileSnapshot = () => {
+  const stored = localStorage.getItem("user");
+  if (!stored) {
+    return {
+      currentUser: defaultUser,
+      formData: { name: "", email: "" },
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(stored);
+    const name = parsed?.namaLengkap || parsed?.name || "";
+    const email = parsed?.email || "";
+    const joined = formatJoined(parsed?.createdAt) || "";
+
+    return {
+      currentUser: {
+        ...defaultUser,
+        name,
+        email,
+        joined,
+        initials: getInitials(name, email),
+      },
+      formData: { name, email },
+    };
+  } catch {
+    return {
+      currentUser: defaultUser,
+      formData: { name: "", email: "" },
+    };
+  }
+};
+
 function UserProfilePage() {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(defaultUser);
+  const [currentUser, setCurrentUser] = useState(
+    () => getStoredProfileSnapshot().currentUser
+  );
+  const [favoritesPreview, setFavoritesPreview] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-  });
+  const [formData, setFormData] = useState(
+    () => getStoredProfileSnapshot().formData
+  );
   const [focusedField, setFocusedField] = useState(null);
   const [signOutConfirm, setSignOutConfirm] = useState(false);
 
@@ -96,30 +98,21 @@ function UserProfilePage() {
       return;
     }
 
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const name = parsed?.namaLengkap || parsed?.name || "";
-        const email = parsed?.email || "";
-        const joined = formatJoined(parsed?.createdAt) || "";
-
-        setCurrentUser({
-          ...defaultUser,
-          name,
-          email,
-          joined,
-          initials: getInitials(name, email),
-        });
-        setFormData({ name, email });
-      } catch {
-        // Ignore parse errors
-      }
-    }
-
     const loadProfile = async () => {
       try {
-        const data = await getMe();
+        const [me, favoritesResponse] = await Promise.all([
+          getMe(),
+          getFavorites(),
+        ]);
+
+        const list = Array.isArray(favoritesResponse)
+          ? favoritesResponse
+          : favoritesResponse?.data || [];
+        const products = list.map((item) => item.product).filter(Boolean);
+
+        setFavoritesPreview(products.slice(0, 4));
+
+        const data = me;
         const name = data?.namaLengkap || data?.name || "";
         const email = data?.email || "";
         const joined = formatJoined(data?.createdAt) || "";
@@ -130,6 +123,7 @@ function UserProfilePage() {
           email,
           joined,
           initials: getInitials(name, email),
+          favoritesCount: products.length,
         });
         setFormData({ name, email });
       } catch (err) {
@@ -145,7 +139,38 @@ function UserProfilePage() {
   const handleChange = (field, value) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const handleSave = () => setEditMode(false);
+  const handleSave = async () => {
+    setProfileError("");
+    setIsSaving(true);
+
+    try {
+      const result = await updateMe({
+        namaLengkap: formData.name,
+        email: formData.email,
+      });
+      const updatedUser = result?.data || result || {};
+      const name = updatedUser?.namaLengkap || updatedUser?.name || "";
+      const email = updatedUser?.email || "";
+      const joined = formatJoined(updatedUser?.createdAt) || currentUser.joined;
+
+      setCurrentUser((prev) => ({
+        ...prev,
+        name,
+        email,
+        joined,
+        initials: getInitials(name, email),
+      }));
+      setFormData({ name, email });
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setEditMode(false);
+    } catch (err) {
+      setProfileError(
+        err?.response?.data?.error || "Gagal memperbarui profil."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const handleCancel = () => {
     setFormData({ name: currentUser.name, email: currentUser.email });
     setEditMode(false);
@@ -237,7 +262,11 @@ function UserProfilePage() {
               <span className="font-body text-[10px] tracking-[0.2em] uppercase text-secondary">
                 YOUR COLLECTION
               </span>
-              <button className="flex items-center gap-1 font-body text-[11px] tracking-[0.1em] uppercase text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+              <button
+                type="button"
+                onClick={() => navigate("/favorites")}
+                className="flex items-center gap-1 font-body text-[11px] tracking-[0.1em] uppercase text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
                 VIEW ALL ({currentUser.favoritesCount})
                 <span className="material-symbols-outlined text-[14px]">
                   arrow_forward
@@ -250,15 +279,16 @@ function UserProfilePage() {
             <div className="w-full h-px bg-outline-variant mb-6 mt-3" />
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {savedProducts.map((product) => (
+              {favoritesPreview.map((product) => (
                 <div
                   key={product.id}
+                  onClick={() => navigate(`/product/${product.id}`)}
                   className="group border border-outline-variant hover:border-outline transition-colors duration-300 flex flex-col cursor-pointer"
                 >
                   <div className="relative bg-[#FAF8F5] aspect-square overflow-hidden">
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={product.imageUrl || product.image}
+                      alt={product.namaProduk || product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <button className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center bg-surface-bright/80 cursor-pointer">
@@ -274,16 +304,25 @@ function UserProfilePage() {
                   <div className="p-3 flex flex-col gap-0.5">
                     <div className="flex justify-between">
                       <span className="font-body text-[9px] tracking-[0.15em] uppercase text-secondary">
-                        {product.country}
+                        {product.country?.namaNegara ||
+                          product.country?.kodeNegara ||
+                          product.country}
                       </span>
                       <span className="font-body text-[9px] tracking-[0.1em] uppercase text-on-surface-variant">
                         {product.brand}
                       </span>
                     </div>
                     <h3 className="font-display text-[14px] leading-[1.3] text-primary mt-1">
-                      {product.name}
+                      {product.namaProduk || product.name}
                     </h3>
-                    <button className="mt-2.5 w-full border border-primary text-primary font-body text-[10px] tracking-[0.1em] uppercase py-2 hover:bg-primary hover:text-on-primary transition-colors duration-300 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/product/${product.id}`);
+                      }}
+                      className="mt-2.5 w-full border border-primary text-primary font-body text-[10px] tracking-[0.1em] uppercase py-2 hover:bg-primary hover:text-on-primary transition-colors duration-300 cursor-pointer"
+                    >
                       VIEW DETAILS
                     </button>
                   </div>
@@ -336,9 +375,10 @@ function UserProfilePage() {
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={handleSave}
+                    disabled={isSaving}
                     className="bg-primary text-on-primary font-body text-[11px] tracking-[0.12em] uppercase px-8 py-3 hover:bg-on-surface-variant transition-colors cursor-pointer"
                   >
-                    SAVE CHANGES
+                    {isSaving ? "SAVING..." : "SAVE CHANGES"}
                   </button>
                   <button
                     onClick={handleCancel}
