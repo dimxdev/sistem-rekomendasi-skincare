@@ -75,7 +75,7 @@ function HomePage() {
       } else {
         await removeFavorite(id);
       }
-    } catch (err) {
+    } catch {
       setLiked((prev) => ({ ...prev, [id]: !nextLiked }));
     }
   };
@@ -140,7 +140,7 @@ function HomePage() {
           return acc;
         }, {});
         setLiked(nextLiked);
-      } catch (err) {
+      } catch {
         setLiked({});
       }
     };
@@ -245,6 +245,17 @@ function HomePage() {
           <p className="font-body text-[15px] text-on-surface-variant max-w-[400px] mx-auto leading-relaxed">
             A personalized selection of premium skincare from around the world
           </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/recommendations"
+              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 font-body text-[11px] tracking-[0.18em] uppercase text-on-primary transition-opacity hover:opacity-90"
+            >
+              Try Recommendation
+            </Link>
+            <span className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-bright px-5 py-3 font-body text-[11px] tracking-[0.18em] uppercase text-on-surface-variant">
+              Weighted scoring
+            </span>
+          </div>
           <div className="w-10 h-px bg-outline-variant mx-auto mt-6" />
         </div>
       </section>

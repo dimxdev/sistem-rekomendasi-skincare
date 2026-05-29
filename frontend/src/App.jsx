@@ -11,6 +11,7 @@ import AdminAddProduct from "./pages/admin/AdminAddProduct";
 import AdminEditProduct from "./pages/admin/AdminEditProduct";
 import AdminUsers from "./pages/admin/AdminUsers";
 import NotFoundPage from "./pages/NotFoundPage";
+import RecommendationPage from "./pages/RecommendationPage";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/recommendations" element={<RecommendationPage />} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />

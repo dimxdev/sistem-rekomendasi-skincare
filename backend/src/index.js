@@ -10,6 +10,7 @@ import userRoute from "./modules/routes/user.route.js";
 import adminAuthRoute from "./modules/routes/admin-auth.route.js";
 import adminProductRoute from "./modules/routes/admin-product.route.js";
 import masterDataRoute from "./modules/routes/master-data.route.js";
+import recommendationRoute from "./modules/routes/recommendation.route.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -27,6 +28,7 @@ app.use("/users", userRoute);
 app.use("/admin", adminAuthRoute);
 app.use("/admin/products", adminProductRoute);
 app.use("/", masterDataRoute);
+app.use("/recommendations", recommendationRoute);
 
 app.listen(port, () => {
   console.log(`server connected at http://localhost:${port}`);

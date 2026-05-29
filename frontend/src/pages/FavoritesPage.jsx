@@ -312,6 +312,7 @@ function FavoritesPage() {
     setSavedProducts((prev) => prev.filter((p) => p.id !== id));
     try {
       await removeFavorite(id);
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Gagal menghapus favorite.");
     }

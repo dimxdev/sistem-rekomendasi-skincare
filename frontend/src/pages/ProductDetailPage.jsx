@@ -248,6 +248,7 @@ function ProductDetailPage() {
                   } else {
                     await removeFavorite(product.id);
                   }
+                // eslint-disable-next-line no-unused-vars
                 } catch (err) {
                   setLiked(!nextLiked);
                 }
