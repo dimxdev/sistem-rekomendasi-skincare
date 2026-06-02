@@ -65,9 +65,13 @@ class UserService {
       }
     }
 
+    const isBanned =
+      data.isBanned !== undefined ? Boolean(data.isBanned) : undefined;
+
     return userRepository.updateUser(id, {
       namaLengkap: data.namaLengkap.trim(),
       email: data.email.trim(),
+      ...(isBanned !== undefined ? { isBanned } : {}),
     });
   }
 

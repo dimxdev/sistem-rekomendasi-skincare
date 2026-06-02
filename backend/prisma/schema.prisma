@@ -27,6 +27,7 @@ model User {
   namaLengkap        String
   email              String    @unique
   passwordHash       String
+  isBanned           Boolean   @default(false)
   tanggalRegistrasi  DateTime  @default(now())
 
   favorites          Favorite[]

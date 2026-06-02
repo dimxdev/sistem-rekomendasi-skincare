@@ -41,6 +41,10 @@ class AuthService {
       throw new Error("Email tidak ditemukan!");
     }
 
+    if (user.isBanned) {
+      throw new Error("Akun kamu telah dibanned!");
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {

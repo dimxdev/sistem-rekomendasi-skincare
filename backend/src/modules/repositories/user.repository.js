@@ -10,6 +10,7 @@ class UserRepository {
         id: true,
         namaLengkap: true,
         email: true,
+        isBanned: true,
         tanggalRegistrasi: true,
         // Ditambahkan untuk admin melihat jumlah favorit (tidak mengganggu fitur user)
         _count: { select: { favorites: true } },
@@ -33,11 +34,15 @@ class UserRepository {
       data: {
         namaLengkap: userData.namaLengkap,
         email: userData.email,
+        ...(userData.isBanned !== undefined
+          ? { isBanned: userData.isBanned }
+          : {}),
       },
       select: {
         id: true,
         namaLengkap: true,
         email: true,
+        isBanned: true,
         tanggalRegistrasi: true,
       },
     });

@@ -119,7 +119,7 @@ function AdminProducts() {
             item.country ||
             "-",
           type: item.productType?.nama || item.type || "-",
-          favorites: item.favorites?.length || 0,
+          favorites: item._count?.favorites ?? item.favorites?.length ?? 0,
           status: item.isActive ? "active" : "hidden",
           image: resolveAssetUrl(item.imageUrl || item.image || null),
         }));

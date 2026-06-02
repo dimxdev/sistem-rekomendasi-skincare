@@ -92,6 +92,12 @@ class ProductRepository {
             concern: true,
           },
         },
+
+        _count: {
+          select: {
+            favorites: true,
+          },
+        },
       },
 
       skip,

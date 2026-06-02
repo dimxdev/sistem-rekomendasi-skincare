@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,7 +9,9 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { Link } from "react-router-dom";
 import AdminSidebar from "../../components/AdminSidebar";
+import { getAdminDashboardSummary } from "../../api/adminDashboard";
 
 ChartJS.register(
   CategoryScale,
@@ -17,63 +19,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Filler
+  Filler,
 );
-
-// ── Mock Data ──────────────────────────────────────────────
-const stats = [
-  { label: "TOTAL PRODUCTS", value: "248", trend: "+12%", up: true },
-  { label: "TOTAL USERS", value: "1,847", trend: "+5%", up: true },
-  { label: "TOTAL FAVORITES", value: "5,621", trend: "+8%", up: true },
-  { label: "ACTIVE TODAY", value: "127", trend: "-2%", up: false },
-];
-
-const mostLiked = [
-  { rank: "01", name: "Revive Eye Serum : Ginseng + Retinal", brand: "Beauty of Joseon", likes: 1245, image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=80&q=80" },
-  { rank: "02", name: "Advanced Snail 96 Mucin Power Essence", brand: "COSRX", likes: 982, image: "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab12?w=80&q=80" },
-  { rank: "03", name: "Facial Treatment Essence", brand: "SK-II", likes: 856, image: "https://images.unsplash.com/photo-1570194065650-d99fb4d8a609?w=80&q=80" },
-  { rank: "04", name: "Watermelon Glow Niacinamide Dew Drops", brand: "Glow Recipe", likes: 712, image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=80&q=80" },
-  { rank: "05", name: "Toleriane Double Repair Face Moisturizer", brand: "La Roche-Posay", likes: 645, image: null },
-];
-
-const recentUsers = [
-  { initials: "AD", name: "Adelia Doe", joined: "Joined Today, 10:42 AM" },
-  { initials: "MR", name: "Marcus Rossi", joined: "Joined Today, 09:15 AM" },
-  { initials: "EL", name: "Elena Lin", joined: "Joined Yesterday" },
-  { initials: "SJ", name: "Samuel Jones", joined: "Joined Yesterday" },
-  { initials: "VK", name: "Valerie King", joined: "Joined Oct 22" },
-];
-
-const chartData7D = [
-  { date: "Oct 01", users: 320 },
-  { date: "Oct 02", users: 380 },
-  { date: "Oct 03", users: 410 },
-  { date: "Oct 04", users: 390 },
-  { date: "Oct 05", users: 450 },
-  { date: "Oct 06", users: 500 },
-  { date: "Oct 07", users: 520 },
-];
-
-const chartData30D = [
-  { date: "Oct 01", users: 320 },
-  { date: "Oct 07", users: 520 },
-  { date: "Oct 14", users: 780 },
-  { date: "Oct 21", users: 1100 },
-  { date: "Oct 28", users: 1847 },
-];
-
-const chartData90D = [
-  { date: "Aug 01", users: 200 },
-  { date: "Aug 15", users: 400 },
-  { date: "Sep 01", users: 600 },
-  { date: "Sep 15", users: 900 },
-  { date: "Oct 01", users: 1200 },
-  { date: "Oct 15", users: 1600 },
-  { date: "Oct 28", users: 1847 },
-];
-
-const chartMap = { "7D": chartData7D, "30D": chartData30D, "90D": chartData90D };
-
 
 const buildChartData = (source) => ({
   labels: source.map((item) => item.date),
@@ -127,9 +74,115 @@ const chartOptions = {
   },
 };
 
-// ── Main Dashboard ─────────────────────────────────────────
+const formatJoinedLabel = (joinedAt) => {
+  if (!joinedAt) {
+    return "Joined recently";
+  }
+
+  const joinedDate = new Date(joinedAt);
+
+  if (Number.isNaN(joinedDate.getTime())) {
+    return "Joined recently";
+  }
+
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const startOfJoinedDay = new Date(
+    joinedDate.getFullYear(),
+    joinedDate.getMonth(),
+    joinedDate.getDate(),
+  );
+  const diffDays = Math.round(
+    (startOfToday - startOfJoinedDay) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays <= 0) {
+    return `Joined Today, ${joinedDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  }
+
+  if (diffDays === 1) {
+    return "Joined Yesterday";
+  }
+
+  return `Joined ${joinedDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  })}`;
+};
+
+const buildAssetUrl = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  return `${import.meta.env.VITE_API_URL}${value}`;
+};
+
 function AdminDashboard() {
   const [chartRange, setChartRange] = useState("30D");
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const data = await getAdminDashboardSummary();
+
+        if (isMounted) {
+          setDashboardData(data);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(
+            loadError?.response?.data?.error ||
+              loadError.message ||
+              "Gagal memuat dashboard admin.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const stats = dashboardData?.stats ?? [];
+  const mostLiked = dashboardData?.mostLikedProducts ?? [];
+  const recentUsers = dashboardData?.recentUsers ?? [];
+  const chartData = dashboardData?.chartData?.[chartRange] ?? [];
+
+  const pageDate = new Date()
+    .toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+    .toUpperCase();
 
   return (
     <div
@@ -138,53 +191,62 @@ function AdminDashboard() {
     >
       <AdminSidebar activePage="overview" />
 
-      {/* Main Content */}
       <main
         className="min-h-screen"
         style={{ marginLeft: "var(--admin-sidebar-width)", padding: "40px" }}
       >
-        {/* Top Bar */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex-1 flex items-center gap-3 border-b max-w-xs" style={{ borderColor: "var(--color-admin-outline-variant)" }}>
-            <span className="material-symbols-outlined text-[18px]" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="SEARCH"
-              className="bg-transparent font-admin-label tracking-widest py-2 outline-none w-full placeholder:opacity-40"
-              style={{ color: "var(--color-admin-on-surface)" }}
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="material-symbols-outlined text-[22px] cursor-pointer" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-              notifications
-            </button>
-            <button className="material-symbols-outlined text-[22px] cursor-pointer" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-              mail
-            </button>
-            <button className="material-symbols-outlined text-[22px] cursor-pointer" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-              account_circle
-            </button>
-          </div>
-        </div>
-
-        {/* Page Header */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="font-admin-display-lg" style={{ color: "var(--color-admin-on-surface)" }}>
+            <h1
+              className="font-admin-display-lg"
+              style={{ color: "var(--color-admin-on-surface)" }}
+            >
               Overview
             </h1>
-            <p className="font-admin-body-md mt-1" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-              Welcome back, Adelia. Here is today's summary.
+            <p
+              className="font-admin-body-md mt-1"
+              style={{ color: "var(--color-admin-on-surface-variant)" }}
+            >
+              Welcome back. Here is today's summary.
             </p>
           </div>
-          <span className="font-admin-label" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-            {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).toUpperCase()}
+          <span
+            className="font-admin-label"
+            style={{ color: "var(--color-admin-on-surface-variant)" }}
+          >
+            {pageDate}
           </span>
         </div>
 
-        {/* Stats Cards */}
+        {isLoading ? (
+          <div
+            className="border p-6 mb-8"
+            style={{
+              backgroundColor: "var(--color-admin-surface-container-lowest)",
+              borderColor: "var(--color-admin-outline-variant)",
+            }}
+          >
+            <p
+              className="font-admin-body-md"
+              style={{ color: "var(--color-admin-on-surface-variant)" }}
+            >
+              Memuat data dashboard...
+            </p>
+          </div>
+        ) : error ? (
+          <div
+            className="border p-6 mb-8"
+            style={{
+              backgroundColor: "var(--color-admin-surface-container-lowest)",
+              borderColor: "var(--color-admin-outline-variant)",
+            }}
+          >
+            <p className="font-admin-body-md" style={{ color: "#8B3A3A" }}>
+              {error}
+            </p>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => (
             <div
@@ -195,18 +257,24 @@ function AdminDashboard() {
                 borderColor: "var(--color-admin-outline-variant)",
               }}
             >
-              <p className="font-admin-label mb-4" style={{ color: "var(--color-admin-on-surface-variant)" }}>
+              <p
+                className="font-admin-label mb-4"
+                style={{ color: "var(--color-admin-on-surface-variant)" }}
+              >
                 {stat.label}
               </p>
               <div className="flex items-end gap-3">
-                <span className="font-admin-display-lg" style={{ color: "var(--color-admin-on-surface)" }}>
-                  {stat.value}
+                <span
+                  className="font-admin-display-lg"
+                  style={{ color: "var(--color-admin-on-surface)" }}
+                >
+                  {Number(stat.value).toLocaleString()}
                 </span>
                 <span
                   className="font-admin-data mb-1 flex items-center gap-0.5"
                   style={{ color: stat.up ? "#4a6b4a" : "#8B3A3A" }}
                 >
-                  <span className="material-symbols-outlined text-[14px]">
+                  <span className="material-symbols-outlined text-button">
                     {stat.up ? "arrow_upward" : "arrow_downward"}
                   </span>
                   {stat.trend}
@@ -216,10 +284,7 @@ function AdminDashboard() {
           ))}
         </div>
 
-        {/* Middle Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-
-          {/* Most Liked Products */}
           <div
             className="lg:col-span-2 border"
             style={{
@@ -231,18 +296,21 @@ function AdminDashboard() {
               className="flex items-center justify-between px-6 py-4 border-b"
               style={{ borderColor: "var(--color-admin-outline-variant)" }}
             >
-              <h2 className="font-admin-headline-md" style={{ color: "var(--color-admin-on-surface)" }}>
+              <h2
+                className="font-admin-headline-md"
+                style={{ color: "var(--color-admin-on-surface)" }}
+              >
                 Most Liked Products
               </h2>
-              <button
+              <Link
+                to="/admin/products"
                 className="font-admin-label transition-colors cursor-pointer hover:underline"
                 style={{ color: "var(--color-admin-primary)" }}
               >
                 VIEW ALL
-              </button>
+              </Link>
             </div>
 
-            {/* Table Header */}
             <div
               className="grid px-6 py-2 border-b"
               style={{
@@ -251,60 +319,97 @@ function AdminDashboard() {
                 backgroundColor: "var(--color-admin-surface-container-low)",
               }}
             >
-              {["RANK", "PRODUCT", "LIKES"].map((h) => (
-                <span key={h} className="font-admin-label text-[10px]" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-                  {h}
+              {["RANK", "PRODUCT", "LIKES"].map((header) => (
+                <span
+                  key={header}
+                  className="font-admin-label text-[10px]"
+                  style={{ color: "var(--color-admin-on-surface-variant)" }}
+                >
+                  {header}
                 </span>
               ))}
             </div>
 
-            {mostLiked.map((item, i) => (
-              <div
-                key={item.rank}
-                className="grid items-center px-6 py-3 transition-colors"
-                style={{
-                  gridTemplateColumns: "48px 1fr 80px",
-                  borderBottom: i < mostLiked.length - 1 ? `1px solid var(--color-admin-outline-variant)` : "none",
-                }}
-              >
-                <span className="font-admin-data" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-                  {item.rank}
-                </span>
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="w-10 h-10 flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: "var(--color-admin-surface-container)", border: "1px solid var(--color-admin-outline-variant)" }}
+            {mostLiked.map((item, index) => {
+              const imageUrl = buildAssetUrl(item.image);
+
+              return (
+                <div
+                  key={item.rank}
+                  className="grid items-center px-6 py-3 transition-colors"
+                  style={{
+                    gridTemplateColumns: "48px 1fr 80px",
+                    borderBottom:
+                      index < mostLiked.length - 1
+                        ? "1px solid var(--color-admin-outline-variant)"
+                        : "none",
+                  }}
+                >
+                  <span
+                    className="font-admin-data"
+                    style={{ color: "var(--color-admin-on-surface-variant)" }}
                   >
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="material-symbols-outlined text-[18px] m-auto flex items-center justify-center h-full" style={{ color: "var(--color-admin-outline)" }}>
-                        image
-                      </span>
-                    )}
+                    {item.rank}
+                  </span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-10 h-10 shrink-0 overflow-hidden"
+                      style={{
+                        backgroundColor: "var(--color-admin-surface-container)",
+                        border: "1px solid var(--color-admin-outline-variant)",
+                      }}
+                    >
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="material-symbols-outlined text-body-lg m-auto flex items-center justify-center h-full"
+                          style={{ color: "var(--color-admin-outline)" }}
+                        >
+                          image
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p
+                        className="font-admin-body-md truncate"
+                        style={{ color: "var(--color-admin-on-surface)" }}
+                      >
+                        {item.name}
+                      </p>
+                      <p
+                        className="font-admin-data text-[11px]"
+                        style={{
+                          color: "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        {item.brand}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-admin-body-md truncate" style={{ color: "var(--color-admin-on-surface)" }}>
-                      {item.name}
-                    </p>
-                    <p className="font-admin-data text-[11px]" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-                      {item.brand}
-                    </p>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="material-symbols-outlined text-button"
+                      style={{ color: "var(--color-admin-primary-container)" }}
+                    >
+                      favorite
+                    </span>
+                    <span
+                      className="font-admin-data"
+                      style={{ color: "var(--color-admin-on-surface)" }}
+                    >
+                      {Number(item.likes).toLocaleString()}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]" style={{ color: "var(--color-admin-primary-container)" }}>
-                    favorite
-                  </span>
-                  <span className="font-admin-data" style={{ color: "var(--color-admin-on-surface)" }}>
-                    {item.likes.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Recent Users */}
           <div
             className="border"
             style={{
@@ -316,52 +421,80 @@ function AdminDashboard() {
               className="flex items-center justify-between px-6 py-4 border-b"
               style={{ borderColor: "var(--color-admin-outline-variant)" }}
             >
-              <h2 className="font-admin-headline-md" style={{ color: "var(--color-admin-on-surface)" }}>
+              <h2
+                className="font-admin-headline-md"
+                style={{ color: "var(--color-admin-on-surface)" }}
+              >
                 Recent Users
               </h2>
-              <button
+              <Link
+                to="/admin/users"
                 className="font-admin-label transition-colors cursor-pointer hover:underline"
                 style={{ color: "var(--color-admin-primary)" }}
               >
                 MANAGE
-              </button>
+              </Link>
             </div>
 
             <div className="flex flex-col">
-              {recentUsers.map((user, i) => (
-                <div
-                  key={user.name}
-                  className="flex items-center gap-3 px-6 py-4"
-                  style={{
-                    borderBottom: i < recentUsers.length - 1 ? `1px solid var(--color-admin-outline-variant)` : "none",
-                  }}
-                >
+              {recentUsers.map((user, index) => {
+                const initials = user.name
+                  ? user.name
+                      .split(" ")
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase())
+                      .join("")
+                  : "US";
+
+                return (
                   <div
-                    className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+                    key={user.id}
+                    className="flex items-center gap-3 px-6 py-4"
                     style={{
-                      backgroundColor: "var(--color-admin-surface-container)",
-                      border: "1px solid var(--color-admin-outline-variant)",
+                      borderBottom:
+                        index < recentUsers.length - 1
+                          ? "1px solid var(--color-admin-outline-variant)"
+                          : "none",
                     }}
                   >
-                    <span className="font-admin-label text-[10px]" style={{ color: "var(--color-admin-primary)" }}>
-                      {user.initials}
-                    </span>
+                    <div
+                      className="w-9 h-9 flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: "var(--color-admin-surface-container)",
+                        border: "1px solid var(--color-admin-outline-variant)",
+                      }}
+                    >
+                      <span
+                        className="font-admin-label text-[10px]"
+                        style={{ color: "var(--color-admin-primary)" }}
+                      >
+                        {initials}
+                      </span>
+                    </div>
+                    <div>
+                      <p
+                        className="font-admin-body-md"
+                        style={{ color: "var(--color-admin-on-surface)" }}
+                      >
+                        {user.name}
+                      </p>
+                      <p
+                        className="font-admin-data text-[11px]"
+                        style={{
+                          color: "var(--color-admin-on-surface-variant)",
+                        }}
+                      >
+                        {formatJoinedLabel(user.joinedAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-admin-body-md" style={{ color: "var(--color-admin-on-surface)" }}>
-                      {user.name}
-                    </p>
-                    <p className="font-admin-data text-[11px]" style={{ color: "var(--color-admin-on-surface-variant)" }}>
-                      {user.joined}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* User Growth Chart */}
         <div
           className="border p-6"
           style={{
@@ -370,7 +503,10 @@ function AdminDashboard() {
           }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-admin-headline-md" style={{ color: "var(--color-admin-on-surface)" }}>
+            <h2
+              className="font-admin-headline-md"
+              style={{ color: "var(--color-admin-on-surface)" }}
+            >
               User Growth
             </h2>
             <div className="flex gap-1">
@@ -380,9 +516,19 @@ function AdminDashboard() {
                   onClick={() => setChartRange(range)}
                   className="px-3 py-1.5 font-admin-label text-[10px] transition-colors cursor-pointer"
                   style={{
-                    backgroundColor: chartRange === range ? "var(--color-admin-primary)" : "transparent",
-                    color: chartRange === range ? "var(--color-admin-on-primary)" : "var(--color-admin-on-surface-variant)",
-                    border: `1px solid ${chartRange === range ? "var(--color-admin-primary)" : "var(--color-admin-outline-variant)"}`,
+                    backgroundColor:
+                      chartRange === range
+                        ? "var(--color-admin-primary)"
+                        : "transparent",
+                    color:
+                      chartRange === range
+                        ? "var(--color-admin-on-primary)"
+                        : "var(--color-admin-on-surface-variant)",
+                    border: `1px solid ${
+                      chartRange === range
+                        ? "var(--color-admin-primary)"
+                        : "var(--color-admin-outline-variant)"
+                    }`,
                   }}
                 >
                   {range}
@@ -391,8 +537,8 @@ function AdminDashboard() {
             </div>
           </div>
 
-          <div className="w-full h-[260px]">
-            <Line data={buildChartData(chartMap[chartRange])} options={chartOptions} />
+          <div className="w-full h-65">
+            <Line data={buildChartData(chartData)} options={chartOptions} />
           </div>
         </div>
       </main>

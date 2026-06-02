@@ -8,6 +8,7 @@ import favoriteRoute from "./modules/routes/favorite.route.js";
 import productRoute from "./modules/routes/product.route.js";
 import userRoute from "./modules/routes/user.route.js";
 import adminAuthRoute from "./modules/routes/admin-auth.route.js";
+import adminDashboardRoute from "./modules/routes/admin-dashboard.route.js";
 import adminProductRoute from "./modules/routes/admin-product.route.js";
 import masterDataRoute from "./modules/routes/master-data.route.js";
 import recommendationRoute from "./modules/routes/recommendation.route.js";
@@ -30,6 +31,7 @@ app.use("/products", productRoute);
 app.use("/", userRoute);
 
 app.use("/admin", adminAuthRoute);
+app.use("/admin/dashboard", adminDashboardRoute);
 app.use("/admin/products", adminProductRoute);
 app.use("/", masterDataRoute);
 app.use("/recommendations", recommendationRoute);

@@ -299,7 +299,10 @@ function EditUserModal({ user, onClose, onSave, onDelete }) {
           >
             {[
               { value: String(user.favorites), label: "FAVORITES" },
-              { value: "Active", label: "STATUS" },
+              {
+                value: status === "banned" ? "Banned" : "Active",
+                label: "STATUS",
+              },
               { value: user.joinedRelative, label: "JOINED" },
             ].map((stat) => (
               <div key={stat.label}>
@@ -469,7 +472,7 @@ export default function AdminUsers() {
         joined: formatDate(u.tanggalRegistrasi),
         joinedRelative: getRelativeTime(u.tanggalRegistrasi),
         favorites: u._count?.favorites || 0,
-        status: "active",
+        status: u.isBanned ? "banned" : "active",
         image: null,
       }));
       setUsers(mappedUsers);
@@ -529,6 +532,7 @@ export default function AdminUsers() {
       await updateUser(updatedUser.id, {
         namaLengkap: updatedUser.name,
         email: updatedUser.email,
+        isBanned: updatedUser.status === "banned",
       });
       setAlertMsg({
         type: "success",
