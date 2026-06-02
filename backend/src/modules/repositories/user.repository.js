@@ -6,12 +6,13 @@ class UserRepository {
       where: {
         id: userId,
       },
-
       select: {
         id: true,
         namaLengkap: true,
         email: true,
         tanggalRegistrasi: true,
+        // Ditambahkan untuk admin melihat jumlah favorit (tidak mengganggu fitur user)
+        _count: { select: { favorites: true } },
       },
     });
   }
@@ -29,18 +30,33 @@ class UserRepository {
       where: {
         id: userId,
       },
-
       data: {
         namaLengkap: userData.namaLengkap,
         email: userData.email,
       },
-
       select: {
         id: true,
         namaLengkap: true,
         email: true,
         tanggalRegistrasi: true,
       },
+    });
+  }
+
+  async getAllUsers() {
+    return prisma.user.findMany({
+      orderBy: { tanggalRegistrasi: "desc" },
+      include: {
+        _count: {
+          select: { favorites: true },
+        },
+      },
+    });
+  }
+
+  async deleteUser(id) {
+    return prisma.user.delete({
+      where: { id },
     });
   }
 }

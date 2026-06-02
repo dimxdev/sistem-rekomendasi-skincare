@@ -33,6 +33,49 @@ class UserService {
 
     return updatedUser;
   }
+
+  async getAllUsersAdmin() {
+    return userRepository.getAllUsers();
+  }
+
+  async getUserByIdAdmin(id) {
+    const user = await userRepository.getUserById(id);
+    if (!user) throw new Error("Pengguna tidak ditemukan");
+    return user;
+  }
+
+  async updateUserAdmin(id, data) {
+    if (!data.namaLengkap || !data.namaLengkap.trim())
+      throw new Error("Nama lengkap wajib diisi");
+    if (!data.email || !data.email.trim()) throw new Error("Email wajib diisi");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email.trim()))
+      throw new Error("Format email tidak valid");
+
+    const user = await userRepository.getUserById(id);
+    if (!user) throw new Error("Pengguna tidak ditemukan");
+
+    if (user.email !== data.email.trim()) {
+      const existingEmail = await userRepository.getUserByEmail(
+        data.email.trim(),
+      );
+      if (existingEmail && existingEmail.id !== id) {
+        throw new Error("Email sudah digunakan oleh pengguna lain");
+      }
+    }
+
+    return userRepository.updateUser(id, {
+      namaLengkap: data.namaLengkap.trim(),
+      email: data.email.trim(),
+    });
+  }
+
+  async deleteUserAdmin(id) {
+    const user = await userRepository.getUserById(id);
+    if (!user) throw new Error("Pengguna tidak ditemukan");
+    return userRepository.deleteUser(id);
+  }
 }
 
 export default new UserService();

@@ -24,7 +24,11 @@ app.use("/example", exampleRouter);
 app.use("/auth", authRoute);
 app.use("/favorites", favoriteRoute);
 app.use("/products", productRoute);
-app.use("/users", userRoute);
+
+// PERBAIKAN: Ubah awalan menjadi "/" agar endpoint /admin/users dan /users/me
+// dari file user.route.js dapat terbaca dengan tepat
+app.use("/", userRoute);
+
 app.use("/admin", adminAuthRoute);
 app.use("/admin/products", adminProductRoute);
 app.use("/", masterDataRoute);

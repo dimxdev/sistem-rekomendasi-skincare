@@ -1,126 +1,29 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
-
-const allUsers = [
-  {
-    id: 1024,
-    initials: "ES",
-    name: "Eleanor Sterling",
-    email: "eleanor.s@example.com",
-    joined: "Mar 12, 2026",
-    joinedRelative: "2 months ago",
-    favorites: 24,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1025,
-    initials: "JM",
-    name: "Julian Mercer",
-    email: "j.mercer@corp.net",
-    joined: "Mar 10, 2026",
-    joinedRelative: "2 months ago",
-    favorites: 8,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1026,
-    initials: "VW",
-    name: "Victoria Wells",
-    email: "victoria.w@example.com",
-    joined: "Mar 05, 2026",
-    joinedRelative: "2 months ago",
-    favorites: 42,
-    status: "banned",
-    image: null,
-  },
-  {
-    id: 1027,
-    initials: "CH",
-    name: "Clara Hayes",
-    email: "chayes.design@studio.co",
-    joined: "Feb 28, 2026",
-    joinedRelative: "3 months ago",
-    favorites: 12,
-    status: "active",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80",
-  },
-  {
-    id: 1028,
-    initials: "MR",
-    name: "Marcus Rossi",
-    email: "m.rossi@gmail.com",
-    joined: "Feb 20, 2026",
-    joinedRelative: "3 months ago",
-    favorites: 31,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1029,
-    initials: "AL",
-    name: "Adelia Lin",
-    email: "adelia.lin@studio.io",
-    joined: "Feb 15, 2026",
-    joinedRelative: "3 months ago",
-    favorites: 57,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1030,
-    initials: "SK",
-    name: "Samuel King",
-    email: "s.king@example.com",
-    joined: "Jan 30, 2026",
-    joinedRelative: "4 months ago",
-    favorites: 5,
-    status: "banned",
-    image: null,
-  },
-  {
-    id: 1031,
-    initials: "NP",
-    name: "Nina Park",
-    email: "nina.park@design.co",
-    joined: "Jan 22, 2026",
-    joinedRelative: "4 months ago",
-    favorites: 19,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1032,
-    initials: "TW",
-    name: "Thomas Webb",
-    email: "t.webb@corp.net",
-    joined: "Jan 10, 2026",
-    joinedRelative: "4 months ago",
-    favorites: 3,
-    status: "active",
-    image: null,
-  },
-  {
-    id: 1033,
-    initials: "RL",
-    name: "Rachel Lowe",
-    email: "r.lowe@example.com",
-    joined: "Jan 05, 2026",
-    joinedRelative: "5 months ago",
-    favorites: 44,
-    status: "active",
-    image: null,
-  },
-];
+import { getAllUsers, updateUser, deleteUser } from "../../api/adminUsers";
 
 const STATUSES = ["All Statuses", "Active", "Banned"];
 const PER_PAGE = 8;
 
+const getRelativeTime = (dateString) => {
+  if (!dateString) return "Unknown";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffDays = Math.floor(Math.abs(now - date) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays < 30) return `${diffDays} days ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} months ago`;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Unknown";
+  const options = { year: "numeric", month: "short", day: "2-digit" };
+  return new Date(dateString).toLocaleDateString("en-US", options);
+};
+
 function StatusChip({ status }) {
   const isActive = status === "active";
-
   return (
     <span
       className="inline-flex items-center gap-1.5 px-2 py-1 font-admin-label text-[10px]"
@@ -198,16 +101,32 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-function EditUserModal({ user, onClose, onSave }) {
+function EditUserModal({ user, onClose, onSave, onDelete }) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [status, setStatus] = useState(user.status);
   const [focusedField, setFocusedField] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSaveClick = async () => {
+    setIsSubmitting(true);
+    await onSave({ ...user, name, email, status });
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteClick = async () => {
+    setIsSubmitting(true);
+    await onDelete(user.id);
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={() => !isSubmitting && onClose()}
+      />
       <div
         className="relative w-full max-w-140 border z-10 overflow-y-auto max-h-[90vh]"
         style={{
@@ -235,7 +154,7 @@ function EditUserModal({ user, onClose, onSave }) {
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => !isSubmitting && onClose()}
               className="material-symbols-outlined text-[22px] cursor-pointer transition-colors mt-1"
               style={{ color: "var(--color-admin-on-surface-variant)" }}
             >
@@ -252,28 +171,7 @@ function EditUserModal({ user, onClose, onSave }) {
               borderColor: "var(--color-admin-outline-variant)",
             }}
           >
-            <div
-              className="w-14 h-14 flex items-center justify-center shrink-0"
-              style={{
-                backgroundColor: "var(--color-admin-surface-container)",
-                border: "1px solid var(--color-admin-outline-variant)",
-              }}
-            >
-              {user.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span
-                  className="font-admin-headline-md text-body-lg"
-                  style={{ color: "var(--color-admin-primary)" }}
-                >
-                  {user.initials}
-                </span>
-              )}
-            </div>
+            <Avatar user={user} size={56} />
             <div>
               <p
                 className="font-admin-body-lg font-medium"
@@ -291,7 +189,7 @@ function EditUserModal({ user, onClose, onSave }) {
                 className="font-admin-data text-[11px] mt-0.5"
                 style={{ color: "var(--color-admin-on-surface-variant)" }}
               >
-                Member since {user.joined} · ID #{user.id}
+                Member since {user.joined} · ID #{user.id.substring(0, 8)}...
               </p>
             </div>
           </div>
@@ -317,6 +215,7 @@ function EditUserModal({ user, onClose, onSave }) {
                 onBlur={() => setFocusedField(null)}
                 className="w-full bg-transparent font-admin-body-md outline-none py-2"
                 style={{ color: "var(--color-admin-on-surface)" }}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -342,6 +241,7 @@ function EditUserModal({ user, onClose, onSave }) {
                 onBlur={() => setFocusedField(null)}
                 className="w-full bg-transparent font-admin-body-md outline-none py-2"
                 style={{ color: "var(--color-admin-on-surface)" }}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -366,7 +266,7 @@ function EditUserModal({ user, onClose, onSave }) {
                         ? "var(--color-admin-primary)"
                         : "var(--color-admin-outline-variant)",
                   }}
-                  onClick={() => setStatus(item)}
+                  onClick={() => !isSubmitting && setStatus(item)}
                 >
                   {status === item && (
                     <div
@@ -399,7 +299,7 @@ function EditUserModal({ user, onClose, onSave }) {
           >
             {[
               { value: String(user.favorites), label: "FAVORITES" },
-              { value: "47", label: "DAYS ACTIVE" },
+              { value: "Active", label: "STATUS" },
               { value: user.joinedRelative, label: "JOINED" },
             ].map((stat) => (
               <div key={stat.label}>
@@ -426,18 +326,20 @@ function EditUserModal({ user, onClose, onSave }) {
         >
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-2 font-admin-label text-[10px] tracking-widest cursor-pointer transition-opacity hover:opacity-70"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 font-admin-label text-[10px] tracking-widest cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-50"
             style={{ color: "#8B3A3A" }}
           >
             <span className="material-symbols-outlined text-body-md">
               delete
-            </span>
+            </span>{" "}
             DELETE USER
           </button>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 border font-admin-label tracking-widest cursor-pointer transition-colors hover:opacity-80"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 border font-admin-label tracking-widest cursor-pointer transition-colors hover:opacity-80 disabled:opacity-50"
               style={{
                 borderColor: "var(--color-admin-on-surface)",
                 color: "var(--color-admin-on-surface)",
@@ -446,14 +348,15 @@ function EditUserModal({ user, onClose, onSave }) {
               CANCEL
             </button>
             <button
-              onClick={() => onSave({ ...user, name, email, status })}
-              className="px-6 py-2.5 font-admin-label tracking-widest cursor-pointer transition-opacity hover:opacity-90"
+              onClick={handleSaveClick}
+              disabled={isSubmitting}
+              className="px-6 py-2.5 font-admin-label tracking-widest cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: "var(--color-admin-on-surface)",
                 color: "var(--color-admin-surface)",
               }}
             >
-              SAVE CHANGES
+              {isSubmitting ? "SAVING..." : "SAVE CHANGES"}
             </button>
           </div>
         </div>
@@ -514,7 +417,8 @@ function EditUserModal({ user, onClose, onSave }) {
               <div className="flex w-full gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 h-10 border font-admin-label text-[10px] tracking-widest cursor-pointer"
+                  disabled={isSubmitting}
+                  className="flex-1 h-10 border font-admin-label text-[10px] tracking-widest cursor-pointer disabled:opacity-50"
                   style={{
                     borderColor: "var(--color-admin-on-surface)",
                     color: "var(--color-admin-on-surface)",
@@ -523,11 +427,12 @@ function EditUserModal({ user, onClose, onSave }) {
                   CANCEL
                 </button>
                 <button
-                  onClick={onClose}
-                  className="flex-1 h-10 font-admin-label text-[10px] tracking-widest cursor-pointer"
+                  onClick={handleDeleteClick}
+                  disabled={isSubmitting}
+                  className="flex-1 h-10 font-admin-label text-[10px] tracking-widest cursor-pointer disabled:opacity-50"
                   style={{ backgroundColor: "#8B3A3A", color: "#ffffff" }}
                 >
-                  DELETE
+                  {isSubmitting ? "DELETING..." : "DELETE"}
                 </button>
               </div>
             </div>
@@ -539,19 +444,55 @@ function EditUserModal({ user, onClose, onSave }) {
 }
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState(allUsers);
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [alertMsg, setAlertMsg] = useState({ type: "", text: "" });
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
 
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllUsers();
+      if (!Array.isArray(data))
+        throw new Error("Format data tidak valid (Bukan Array)");
+
+      const mappedUsers = data.map((u) => ({
+        id: u.id,
+        initials: (u.namaLengkap || "US").slice(0, 2).toUpperCase(),
+        name: u.namaLengkap || "Unknown User",
+        email: u.email || "No Email",
+        joined: formatDate(u.tanggalRegistrasi),
+        joinedRelative: getRelativeTime(u.tanggalRegistrasi),
+        favorites: u._count?.favorites || 0,
+        status: "active",
+        image: null,
+      }));
+      setUsers(mappedUsers);
+      setAlertMsg({ type: "", text: "" }); // Reset error jika berhasil
+    } catch (error) {
+      console.error("DEBUG API ERROR:", error); // Muncul di console log browser
+      const errorMsg = error?.response?.data?.error || error.message;
+      setAlertMsg({ type: "error", text: `Gagal: ${errorMsg}` }); // Tampil langsung di layar
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const activeCount = useMemo(
-    () => users.filter((user) => user.status === "active").length,
+    () => users.filter((u) => u.status === "active").length,
     [users],
   );
   const bannedCount = useMemo(
-    () => users.filter((user) => user.status === "banned").length,
+    () => users.filter((u) => u.status === "banned").length,
     [users],
   );
 
@@ -568,11 +509,10 @@ export default function AdminUsers() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const toggleSelect = (id) => {
+  const toggleSelect = (id) =>
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
-  };
 
   const toggleAll = () => {
     const pageIds = paginated.map((user) => user.id);
@@ -584,11 +524,39 @@ export default function AdminUsers() {
     );
   };
 
-  const handleSave = (updatedUser) => {
-    setUsers((prev) =>
-      prev.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
-    );
-    setEditUser(null);
+  const handleSave = async (updatedUser) => {
+    try {
+      await updateUser(updatedUser.id, {
+        namaLengkap: updatedUser.name,
+        email: updatedUser.email,
+      });
+      setAlertMsg({
+        type: "success",
+        text: "Data pengguna berhasil diperbarui.",
+      });
+      setEditUser(null);
+      fetchUsers();
+    } catch (error) {
+      setAlertMsg({
+        type: "error",
+        text: error?.response?.data?.error || "Gagal memperbarui pengguna.",
+      });
+    }
+  };
+
+  const handleDelete = async (userId) => {
+    try {
+      await deleteUser(userId);
+      setAlertMsg({ type: "success", text: "Pengguna berhasil dihapus." });
+      setEditUser(null);
+      if (paginated.length === 1 && page > 1) setPage(page - 1);
+      fetchUsers();
+    } catch (error) {
+      setAlertMsg({
+        type: "error",
+        text: error?.response?.data?.error || "Gagal menghapus pengguna.",
+      });
+    }
   };
 
   return (
@@ -648,6 +616,34 @@ export default function AdminUsers() {
             </span>
           </div>
         </div>
+
+        {alertMsg.text && (
+          <div
+            className="mb-6 p-4 border"
+            style={{
+              borderColor:
+                alertMsg.type === "success"
+                  ? "var(--color-admin-primary)"
+                  : "var(--color-admin-error)",
+              backgroundColor:
+                alertMsg.type === "success"
+                  ? "rgba(74, 107, 74, 0.05)"
+                  : "rgba(139, 58, 58, 0.05)",
+            }}
+          >
+            <p
+              className="font-admin-body-md"
+              style={{
+                color:
+                  alertMsg.type === "success"
+                    ? "var(--color-admin-primary)"
+                    : "var(--color-admin-error)",
+              }}
+            >
+              {alertMsg.text}
+            </p>
+          </div>
+        )}
 
         <div
           className="mb-6 h-px"
@@ -721,14 +717,14 @@ export default function AdminUsers() {
               style={{
                 borderColor: "var(--color-admin-outline-variant)",
                 backgroundColor:
-                  paginated.every((user) => selected.includes(user.id)) &&
+                  paginated.every((u) => selected.includes(u.id)) &&
                   paginated.length > 0
                     ? "var(--color-admin-primary)"
                     : "transparent",
               }}
               onClick={toggleAll}
             >
-              {paginated.every((user) => selected.includes(user.id)) &&
+              {paginated.every((u) => selected.includes(u.id)) &&
                 paginated.length > 0 && (
                   <span
                     className="material-symbols-outlined text-[11px]"
@@ -757,7 +753,16 @@ export default function AdminUsers() {
             ))}
           </div>
 
-          {paginated.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <p
+                className="font-admin-body-md"
+                style={{ color: "var(--color-admin-on-surface-variant)" }}
+              >
+                Memuat data pengguna...
+              </p>
+            </div>
+          ) : paginated.length === 0 ? (
             <div className="flex items-center justify-center py-16">
               <p
                 className="font-admin-body-md"
@@ -801,9 +806,7 @@ export default function AdminUsers() {
                     </span>
                   )}
                 </div>
-
                 <Avatar user={user} size={36} />
-
                 <div className="min-w-0 pr-4">
                   <p
                     className="font-admin-body-md truncate"
@@ -815,17 +818,15 @@ export default function AdminUsers() {
                     className="font-admin-data text-[11px]"
                     style={{ color: "var(--color-admin-on-surface-variant)" }}
                   >
-                    User ID #{user.id}
+                    ID #{user.id.substring(0, 8)}
                   </p>
                 </div>
-
                 <span
                   className="font-admin-body-md truncate"
                   style={{ color: "var(--color-admin-on-surface-variant)" }}
                 >
                   {user.email}
                 </span>
-
                 <div>
                   <p
                     className="font-admin-body-md"
@@ -840,7 +841,6 @@ export default function AdminUsers() {
                     {user.joinedRelative}
                   </p>
                 </div>
-
                 <div className="flex items-center gap-1">
                   <span
                     className="material-symbols-outlined text-button"
@@ -855,9 +855,7 @@ export default function AdminUsers() {
                     {user.favorites}
                   </span>
                 </div>
-
                 <StatusChip status={user.status} />
-
                 <div className="flex items-center gap-2">
                   <button
                     className="material-symbols-outlined text-body-lg cursor-pointer transition-colors hover:opacity-70"
@@ -870,6 +868,7 @@ export default function AdminUsers() {
                   <button
                     className="material-symbols-outlined text-body-lg cursor-pointer transition-colors hover:opacity-70"
                     style={{ color: "var(--color-admin-error)" }}
+                    onClick={() => setEditUser({ ...user, promptDelete: true })}
                     type="button"
                   >
                     delete
@@ -890,7 +889,8 @@ export default function AdminUsers() {
               className="font-admin-data text-label-caps"
               style={{ color: "var(--color-admin-on-surface-variant)" }}
             >
-              Showing {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–
+              Showing{" "}
+              {Math.min((page - 1) * PER_PAGE + 1, filtered.length || 0)}–
               {Math.min(page * PER_PAGE, filtered.length)} of{" "}
               {filtered.length.toLocaleString()}
             </span>
@@ -908,7 +908,6 @@ export default function AdminUsers() {
                   chevron_left
                 </span>
               </button>
-
               {Array.from({ length: totalPages }, (_, index) => index + 1).map(
                 (currentPage) => (
                   <button
@@ -934,7 +933,6 @@ export default function AdminUsers() {
                   </button>
                 ),
               )}
-
               <button
                 onClick={() =>
                   setPage((current) => Math.min(totalPages, current + 1))
@@ -955,13 +953,61 @@ export default function AdminUsers() {
         </div>
       </main>
 
-      {editUser && (
-        <EditUserModal
-          user={editUser}
-          onClose={() => setEditUser(null)}
-          onSave={handleSave}
-        />
-      )}
+      {editUser &&
+        (editUser.promptDelete ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setEditUser(null)}
+            />
+            <div
+              className="relative w-90 border p-8 flex flex-col items-center text-center z-10"
+              style={{
+                backgroundColor: "var(--color-admin-surface-container-lowest)",
+                borderColor: "var(--color-admin-outline-variant)",
+              }}
+            >
+              <h3
+                className="font-admin-headline-md mb-2"
+                style={{ color: "var(--color-admin-on-surface)" }}
+              >
+                Delete User?
+              </h3>
+              <p
+                className="font-admin-body-md text-[13px] mb-5"
+                style={{ color: "var(--color-admin-on-surface-variant)" }}
+              >
+                This will remove {editUser.name}'s account.
+              </p>
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => setEditUser(null)}
+                  className="flex-1 h-10 border font-admin-label text-[10px]"
+                  style={{
+                    borderColor: "var(--color-admin-on-surface)",
+                    color: "var(--color-admin-on-surface)",
+                  }}
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={() => handleDelete(editUser.id)}
+                  className="flex-1 h-10 font-admin-label text-[10px]"
+                  style={{ backgroundColor: "#8B3A3A", color: "#ffffff" }}
+                >
+                  DELETE
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <EditUserModal
+            user={editUser}
+            onClose={() => setEditUser(null)}
+            onSave={handleSave}
+            onDelete={handleDelete}
+          />
+        ))}
     </div>
   );
 }
