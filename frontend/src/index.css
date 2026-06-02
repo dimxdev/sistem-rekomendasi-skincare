@@ -1,0 +1,275 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Noto+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-primary: #000000;
+  --color-secondary: #765933;
+  --color-gold: #B8956A;
+  --color-soft-beige: #E8E4DD;
+  --color-surface: #fbf9f8;
+  --color-surface-bright: #fbf9f8;
+  --color-surface-dim: #dbdad9;
+  --color-surface-container: #efeded;
+  --color-surface-container-low: #f5f3f3;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e9e8e7;
+  --color-surface-container-highest: #e4e2e2;
+  --color-surface-variant: #e4e2e2;
+  --color-on-surface: #1b1c1c;
+  --color-on-surface-variant: #444748;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #795b35;
+  --color-secondary-container: #fed6a7;
+  --color-outline: #747878;
+  --color-outline-variant: #c4c7c7;
+  --color-inverse-surface: #303031;
+  --color-inverse-on-surface: #f2f0f0;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-background: #fbf9f8;
+  --color-on-background: #1b1c1c;
+
+  /* Font Family */
+  --font-display: "Playfair Display", serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Font Sizes */
+  --text-h1: 48px;
+  --text-h2: 32px;
+  --text-h3: 24px;
+  --text-body-lg: 18px;
+  --text-body-md: 16px;
+  --text-label-caps: 12px;
+  --text-button: 14px;
+
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 48px;
+  --spacing-xl: 80px;
+  --spacing-gutter: 24px;
+  --spacing-container-padding: 64px;
+}
+
+/* Global Base Styles */
+@layer base {
+  * {
+    border-radius: 0px; /* Sharp corners by default */
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+  }
+
+  /* Material Symbols config */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  }
+}
+
+/* ─────────────────────────────────────────
+   LUMIÈRE ADMIN — Design System Tokens
+   Tambahkan di bawah @theme yang sudah ada
+───────────────────────────────────────── */
+
+@layer base {
+  .admin {
+    /* Surface */
+    --color-admin-surface: #fff8f4;
+    --color-admin-surface-dim: #e0d9d3;
+    --color-admin-surface-bright: #fff8f4;
+    --color-admin-surface-container-lowest: #ffffff;
+    --color-admin-surface-container-low: #faf2ec;
+    --color-admin-surface-container: #f5ece7;
+    --color-admin-surface-container-high: #efe7e1;
+    --color-admin-surface-container-highest: #e9e1db;
+    --color-admin-on-surface: #1e1b18;
+    --color-admin-on-surface-variant: #4e453b;
+    --color-admin-inverse-surface: #34302c;
+    --color-admin-inverse-on-surface: #f7efe9;
+
+    /* Outline */
+    --color-admin-outline: #80756a;
+    --color-admin-outline-variant: #d2c4b7;
+
+    /* Primary — Gold */
+    --color-admin-primary: #765933;
+    --color-admin-on-primary: #ffffff;
+    --color-admin-primary-container: #b8956a;
+    --color-admin-on-primary-container: #462e0c;
+    --color-admin-inverse-primary: #e7c092;
+    --color-admin-primary-fixed: #ffddb6;
+    --color-admin-primary-fixed-dim: #e7c092;
+    --color-admin-on-primary-fixed: #2a1800;
+    --color-admin-on-primary-fixed-variant: #5c421e;
+
+    /* Secondary */
+    --color-admin-secondary: #5e5e5c;
+    --color-admin-on-secondary: #ffffff;
+    --color-admin-secondary-container: #e1dfdc;
+    --color-admin-on-secondary-container: #636361;
+    --color-admin-secondary-fixed: #e4e2df;
+    --color-admin-secondary-fixed-dim: #c8c6c4;
+    --color-admin-on-secondary-fixed: #1b1c1a;
+    --color-admin-on-secondary-fixed-variant: #474745;
+
+    /* Tertiary — Blue */
+    --color-admin-tertiary: #4a6078;
+    --color-admin-on-tertiary: #ffffff;
+    --color-admin-tertiary-container: #869db7;
+    --color-admin-on-tertiary-container: #1d344a;
+    --color-admin-tertiary-fixed: #cfe5ff;
+    --color-admin-tertiary-fixed-dim: #b1c9e4;
+    --color-admin-on-tertiary-fixed: #031d32;
+    --color-admin-on-tertiary-fixed-variant: #32495f;
+
+    /* Error */
+    --color-admin-error: #ba1a1a;
+    --color-admin-on-error: #ffffff;
+    --color-admin-error-container: #ffdad6;
+    --color-admin-on-error-container: #93000a;
+    --color-admin-danger: #8B3A3A;
+
+    /* Background */
+    --color-admin-background: #fff8f4;
+    --color-admin-on-background: #1e1b18;
+    --color-admin-surface-variant: #e9e1db;
+    --color-admin-surface-tint: #765933;
+
+    /* Sidebar */
+    --admin-sidebar-width: 260px;
+
+    background-color: var(--color-admin-background);
+    color: var(--color-admin-on-background);
+  }
+}
+
+/* Admin Typography utilities */
+@layer utilities {
+  .font-admin-display-xl {
+    font-family: "Noto Serif", serif;
+    font-size: 42px;
+    font-weight: 300;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .font-admin-display-lg {
+    font-family: "Noto Serif", serif;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1.2;
+  }
+
+  .font-admin-headline-md {
+    font-family: "Noto Serif", serif;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  .font-admin-body-lg {
+    font-family: "Inter", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  .font-admin-body-md {
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .font-admin-data {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  .font-admin-label {
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}
+
+/* Admin input — bottom border only */
+@layer components {
+  .input-admin {
+    border: none;
+    border-bottom: 1px solid #d2c4b7;
+    border-radius: 0;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .input-admin:focus {
+    border-bottom-color: #b8956a;
+  }
+
+  /* Autofill fix */
+  .input-admin:-webkit-autofill,
+  .input-admin:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px #faf2ec inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Admin sidebar active state */
+  .admin-nav-active {
+    border-left: 2px solid #b8956a;
+    color: #765933;
+    font-weight: 500;
+    background-color: #faf2ec;
+  }
+
+  /* Status chips */
+  .chip-active {
+    background-color: rgba(74, 107, 74, 0.1);
+    color: #2d5a2d;
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+  }
+
+  .chip-hidden {
+    background-color: rgba(94, 94, 92, 0.1);
+    color: #5e5e5c;
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+  }
+
+  .chip-banned {
+    background-color: rgba(186, 26, 26, 0.1);
+    color: #8B3A3A;
+    font-family: "Inter", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+  }
+}

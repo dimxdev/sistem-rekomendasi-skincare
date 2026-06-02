@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  passwordHash  String
+
+  createdAt     DateTime @default(now())
+
+  @@map("admins")
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  namaLengkap        String
+  email              String    @unique
+  passwordHash       String
+  tanggalRegistrasi  DateTime  @default(now())
+
+  favorites          Favorite[]
+
+  @@map("users")
+}
+
+model Country {
+  id            String    @id @default(uuid())
+  namaNegara    String    @unique
+  kodeNegara    String?
+
+  products      Product[]
+
+  @@map("countries")
+}
+
+model ProductType {
+  id          String    @id @default(uuid())
+  nama        String    @unique
+
+  products    Product[]
+
+  @@map("product_types")
+}
+
+model SkinType {
+  id          String    @id @default(uuid())
+  nama        String    @unique
+
+  products    ProductSkinType[]
+
+  @@map("skin_types")
+}
+
+model SkinConcern {
+  id          String    @id @default(uuid())
+  nama        String    @unique
+
+  products    ProductConcern[]
+
+  @@map("skin_concerns")
+}
+
+model Product {
+  id                String    @id @default(uuid())
+
+  namaProduk        String
+  brand             String
+  manfaatUtama      String
+
+  tokoOnlineUrl     String
+  imageUrl          String?
+
+  countryId         String
+  country           Country @relation(fields: [countryId], references: [id])
+
+  productTypeId     String
+  productType       ProductType @relation(fields: [productTypeId], references: [id])
+
+  skinTypes         ProductSkinType[]
+  concerns          ProductConcern[]
+
+  favorites         Favorite[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("products")
+}
+
+model ProductSkinType {
+  productId     String
+  skinTypeId    String
+
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skinType      SkinType  @relation(fields: [skinTypeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, skinTypeId])
+
+  @@map("product_skin_types")
+}
+
+model ProductConcern {
+  productId     String
+  concernId     String
+
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  concern       SkinConcern   @relation(fields: [concernId], references: [id], onDelete: Cascade)
+
+  @@id([productId, concernId])
+
+  @@map("product_concerns")
+}
+
+model Favorite {
+  id                  String    @id @default(uuid())
+
+  userId              String
+  productId           String
+
+  tanggalDitambahkan  DateTime  @default(now())
+
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product             Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+
+  @@map("favorites")
+}
+
+
