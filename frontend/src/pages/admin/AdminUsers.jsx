@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
-import { getAllUsers, updateUser, deleteUser } from "../../api/adminUsers";
+import { getAllUsers, updateUser } from "../../api/adminUsers";
 
 const STATUSES = ["All Statuses", "Active", "Banned"];
 const PER_PAGE = 8;
@@ -101,23 +101,13 @@ function FilterSelect({ value, onChange, options }) {
   );
 }
 
-function EditUserModal({ user, onClose, onSave, onDelete }) {
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+function EditUserModal({ user, onClose, onSave }) {
   const [status, setStatus] = useState(user.status);
-  const [focusedField, setFocusedField] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSaveClick = async () => {
     setIsSubmitting(true);
-    await onSave({ ...user, name, email, status });
-    setIsSubmitting(false);
-  };
-
-  const handleDeleteClick = async () => {
-    setIsSubmitting(true);
-    await onDelete(user.id);
+    await onSave({ ...user, name: user.name, email: user.email, status });
     setIsSubmitting(false);
   };
 
@@ -194,56 +184,29 @@ function EditUserModal({ user, onClose, onSave, onDelete }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="font-admin-label text-[10px]"
-              style={{ color: "var(--color-admin-primary)" }}
-            >
-              FULL NAME
-            </label>
-            <div
-              className="transition-colors duration-200"
-              style={{
-                borderBottom: `1px solid ${focusedField === "name" ? "var(--color-admin-primary)" : "var(--color-admin-outline-variant)"}`,
-              }}
-            >
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onFocus={() => setFocusedField("name")}
-                onBlur={() => setFocusedField(null)}
-                className="w-full bg-transparent font-admin-body-md outline-none py-2"
-                style={{ color: "var(--color-admin-on-surface)" }}
-                disabled={isSubmitting}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="font-admin-label text-[10px]"
-              style={{ color: "var(--color-admin-primary)" }}
-            >
-              EMAIL ADDRESS
-            </label>
-            <div
-              className="transition-colors duration-200"
-              style={{
-                borderBottom: `1px solid ${focusedField === "email" ? "var(--color-admin-primary)" : "var(--color-admin-outline-variant)"}`,
-              }}
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setFocusedField("email")}
-                onBlur={() => setFocusedField(null)}
-                className="w-full bg-transparent font-admin-body-md outline-none py-2"
-                style={{ color: "var(--color-admin-on-surface)" }}
-                disabled={isSubmitting}
-              />
-            </div>
+          <div className="flex flex-col gap-4">
+            {[
+              { label: "FULL NAME", value: user.name },
+              { label: "EMAIL ADDRESS", value: user.email },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex flex-col gap-1.5">
+                <p
+                  className="font-admin-label text-[10px]"
+                  style={{ color: "var(--color-admin-on-surface-variant)" }}
+                >
+                  {label}
+                </p>
+                <p
+                  className="font-admin-body-md py-2 border-b"
+                  style={{
+                    color: "var(--color-admin-on-surface)",
+                    borderColor: "var(--color-admin-outline-variant)",
+                  }}
+                >
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -324,123 +287,32 @@ function EditUserModal({ user, onClose, onSave, onDelete }) {
         </div>
 
         <div
-          className="flex items-center justify-between px-8 py-5 border-t"
+          className="flex items-center justify-end gap-3 px-8 py-5 border-t"
           style={{ borderColor: "var(--color-admin-outline-variant)" }}
         >
           <button
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={onClose}
             disabled={isSubmitting}
-            className="flex items-center gap-2 font-admin-label text-[10px] tracking-widest cursor-pointer transition-opacity hover:opacity-70 disabled:opacity-50"
-            style={{ color: "#8B3A3A" }}
+            className="px-6 py-2.5 border font-admin-label tracking-widest cursor-pointer transition-colors hover:opacity-80 disabled:opacity-50"
+            style={{
+              borderColor: "var(--color-admin-on-surface)",
+              color: "var(--color-admin-on-surface)",
+            }}
           >
-            <span className="material-symbols-outlined text-body-md">
-              delete
-            </span>{" "}
-            DELETE USER
+            CANCEL
           </button>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-6 py-2.5 border font-admin-label tracking-widest cursor-pointer transition-colors hover:opacity-80 disabled:opacity-50"
-              style={{
-                borderColor: "var(--color-admin-on-surface)",
-                color: "var(--color-admin-on-surface)",
-              }}
-            >
-              CANCEL
-            </button>
-            <button
-              onClick={handleSaveClick}
-              disabled={isSubmitting}
-              className="px-6 py-2.5 font-admin-label tracking-widest cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{
-                backgroundColor: "var(--color-admin-on-surface)",
-                color: "var(--color-admin-surface)",
-              }}
-            >
-              {isSubmitting ? "SAVING..." : "SAVE CHANGES"}
-            </button>
-          </div>
-        </div>
-
-        {showDeleteConfirm && (
-          <div
-            className="absolute inset-0 flex items-center justify-center z-10"
-            style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          <button
+            onClick={handleSaveClick}
+            disabled={isSubmitting}
+            className="px-6 py-2.5 font-admin-label tracking-widest cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{
+              backgroundColor: "var(--color-admin-on-surface)",
+              color: "var(--color-admin-surface)",
+            }}
           >
-            <div
-              className="w-90 border p-8 flex flex-col items-center text-center"
-              style={{
-                backgroundColor: "var(--color-admin-surface-container-lowest)",
-                borderColor: "var(--color-admin-outline-variant)",
-              }}
-            >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="mb-4"
-              >
-                <path
-                  d="M12 2L1 21h22L12 2z"
-                  stroke="#8B3A3A"
-                  strokeWidth="1.5"
-                  strokeLinejoin="miter"
-                />
-                <path
-                  d="M12 9v5"
-                  stroke="#8B3A3A"
-                  strokeWidth="1.5"
-                  strokeLinecap="square"
-                />
-                <circle
-                  cx="12"
-                  cy="17"
-                  r="0.5"
-                  fill="#8B3A3A"
-                  stroke="#8B3A3A"
-                  strokeWidth="1"
-                />
-              </svg>
-              <h3
-                className="font-admin-headline-md mb-2"
-                style={{ color: "var(--color-admin-on-surface)" }}
-              >
-                Delete this user?
-              </h3>
-              <p
-                className="font-admin-body-md text-[13px] mb-5"
-                style={{ color: "var(--color-admin-on-surface-variant)" }}
-              >
-                This will permanently remove {user.name}'s account and all their
-                data.
-              </p>
-              <div className="flex w-full gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isSubmitting}
-                  className="flex-1 h-10 border font-admin-label text-[10px] tracking-widest cursor-pointer disabled:opacity-50"
-                  style={{
-                    borderColor: "var(--color-admin-on-surface)",
-                    color: "var(--color-admin-on-surface)",
-                  }}
-                >
-                  CANCEL
-                </button>
-                <button
-                  onClick={handleDeleteClick}
-                  disabled={isSubmitting}
-                  className="flex-1 h-10 font-admin-label text-[10px] tracking-widest cursor-pointer disabled:opacity-50"
-                  style={{ backgroundColor: "#8B3A3A", color: "#ffffff" }}
-                >
-                  {isSubmitting ? "DELETING..." : "DELETE"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            {isSubmitting ? "SAVING..." : "SAVE CHANGES"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -544,21 +416,6 @@ export default function AdminUsers() {
       setAlertMsg({
         type: "error",
         text: error?.response?.data?.error || "Gagal memperbarui pengguna.",
-      });
-    }
-  };
-
-  const handleDelete = async (userId) => {
-    try {
-      await deleteUser(userId);
-      setAlertMsg({ type: "success", text: "Pengguna berhasil dihapus." });
-      setEditUser(null);
-      if (paginated.length === 1 && page > 1) setPage(page - 1);
-      fetchUsers();
-    } catch (error) {
-      setAlertMsg({
-        type: "error",
-        text: error?.response?.data?.error || "Gagal menghapus pengguna.",
       });
     }
   };
@@ -711,7 +568,8 @@ export default function AdminUsers() {
           <div
             className="grid items-center px-4 py-3 border-b"
             style={{
-              gridTemplateColumns: "40px 80px 1fr 200px 140px 100px 100px",
+              gridTemplateColumns:
+                "40px 56px 1fr 220px 150px 110px 110px 110px",
               borderColor: "var(--color-admin-outline-variant)",
               backgroundColor: "var(--color-admin-surface-container-low)",
             }}
@@ -781,7 +639,8 @@ export default function AdminUsers() {
                 key={user.id}
                 className="grid items-center px-4 py-3 transition-colors"
                 style={{
-                  gridTemplateColumns: "40px 80px 1fr 200px 140px 100px 100px",
+                  gridTemplateColumns:
+                "40px 56px 1fr 220px 150px 110px 110px 110px",
                   borderBottom:
                     index < paginated.length - 1
                       ? "1px solid var(--color-admin-outline-variant)"
@@ -860,22 +719,17 @@ export default function AdminUsers() {
                   </span>
                 </div>
                 <StatusChip status={user.status} />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center">
                   <button
-                    className="material-symbols-outlined text-body-lg cursor-pointer transition-colors hover:opacity-70"
+                    className="admin-edit-btn flex items-center gap-1.5 px-2.5 py-1 font-admin-label text-[10px] tracking-widest cursor-pointer transition-colors"
                     style={{ color: "var(--color-admin-on-surface-variant)" }}
                     onClick={() => setEditUser(user)}
                     type="button"
                   >
-                    edit
-                  </button>
-                  <button
-                    className="material-symbols-outlined text-body-lg cursor-pointer transition-colors hover:opacity-70"
-                    style={{ color: "var(--color-admin-error)" }}
-                    onClick={() => setEditUser({ ...user, promptDelete: true })}
-                    type="button"
-                  >
-                    delete
+                    <span className="material-symbols-outlined text-[15px]">
+                      edit
+                    </span>
+                    EDIT
                   </button>
                 </div>
               </div>
@@ -957,61 +811,13 @@ export default function AdminUsers() {
         </div>
       </main>
 
-      {editUser &&
-        (editUser.promptDelete ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div
-              className="absolute inset-0 bg-black/50"
-              onClick={() => setEditUser(null)}
-            />
-            <div
-              className="relative w-90 border p-8 flex flex-col items-center text-center z-10"
-              style={{
-                backgroundColor: "var(--color-admin-surface-container-lowest)",
-                borderColor: "var(--color-admin-outline-variant)",
-              }}
-            >
-              <h3
-                className="font-admin-headline-md mb-2"
-                style={{ color: "var(--color-admin-on-surface)" }}
-              >
-                Delete User?
-              </h3>
-              <p
-                className="font-admin-body-md text-[13px] mb-5"
-                style={{ color: "var(--color-admin-on-surface-variant)" }}
-              >
-                This will remove {editUser.name}'s account.
-              </p>
-              <div className="flex w-full gap-3">
-                <button
-                  onClick={() => setEditUser(null)}
-                  className="flex-1 h-10 border font-admin-label text-[10px]"
-                  style={{
-                    borderColor: "var(--color-admin-on-surface)",
-                    color: "var(--color-admin-on-surface)",
-                  }}
-                >
-                  CANCEL
-                </button>
-                <button
-                  onClick={() => handleDelete(editUser.id)}
-                  className="flex-1 h-10 font-admin-label text-[10px]"
-                  style={{ backgroundColor: "#8B3A3A", color: "#ffffff" }}
-                >
-                  DELETE
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <EditUserModal
-            user={editUser}
-            onClose={() => setEditUser(null)}
-            onSave={handleSave}
-            onDelete={handleDelete}
-          />
-        ))}
+      {editUser && (
+        <EditUserModal
+          user={editUser}
+          onClose={() => setEditUser(null)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 }

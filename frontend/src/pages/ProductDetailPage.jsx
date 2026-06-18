@@ -1,8 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import { resolveAssetUrl } from "../lib/asset";
 import { getProductDetail } from "../api/productDetail";
 import { addFavorite, removeFavorite } from "../api/favorites";
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const detailContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.09, delayChildren: 0.25 },
+  },
+};
+
+const detailItem = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: EASE },
+  },
+};
 
 function ProductDetailPage() {
   const navigate = useNavigate();
@@ -88,9 +107,19 @@ function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-background flex items-center justify-center p-4">
+    <motion.div
+      className="min-h-screen bg-background text-on-background flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: EASE }}
+    >
       {/* Modal */}
-      <div className="relative w-full max-w-[1100px] h-[700px] bg-surface-bright border border-soft-beige flex flex-col md:flex-row overflow-hidden z-10">
+      <motion.div
+        className="relative w-full max-w-[1100px] h-[700px] bg-surface-bright border border-soft-beige flex flex-col md:flex-row overflow-hidden z-10"
+        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: EASE }}
+      >
         {/* Close Button */}
         <button
           onClick={() => navigate(-1)}
@@ -101,13 +130,22 @@ function ProductDetailPage() {
         </button>
 
         {/* LEFT — Image Gallery */}
-        <div className="w-full md:w-1/2 bg-[#FAF8F5] flex flex-col items-center justify-center p-10 border-b md:border-b-0 md:border-r border-soft-beige relative">
+        <motion.div
+          className="w-full md:w-1/2 bg-[#FAF8F5] flex flex-col items-center justify-center p-10 border-b md:border-b-0 md:border-r border-soft-beige relative"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: EASE, delay: 0.15 }}
+        >
           {/* Main Image */}
           <div className="flex-1 w-full flex items-center justify-center">
-            <img
+            <motion.img
+              key={activeImage}
               src={images[activeImage]}
               alt="Product"
-              className="w-[65%] h-auto object-contain max-h-[420px] transition-opacity duration-300"
+              className="w-[65%] h-auto object-contain max-h-[420px]"
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: EASE }}
             />
           </div>
 
@@ -135,47 +173,67 @@ function ProductDetailPage() {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* RIGHT — Product Details */}
         <div className="w-full md:w-1/2 flex flex-col h-full overflow-y-auto">
-          <div className="flex-1 p-[52px] pb-0">
+          <motion.div
+            className="flex-1 p-[52px] pb-0"
+            variants={detailContainer}
+            initial="hidden"
+            animate="show"
+          >
             {/* Eyebrow */}
-            <div className="font-body text-[11px] tracking-[0.2em] uppercase text-gold mb-1">
+            <motion.div
+              variants={detailItem}
+              className="font-body text-[11px] tracking-[0.2em] uppercase text-gold mb-1"
+            >
               {country} · {category}
-            </div>
+            </motion.div>
 
             {/* Brand */}
-            <div className="font-body text-[12px] tracking-[0.15em] uppercase text-on-surface-variant mb-3">
+            <motion.div
+              variants={detailItem}
+              className="font-body text-[12px] tracking-[0.15em] uppercase text-on-surface-variant mb-3"
+            >
               {brand}
-            </div>
+            </motion.div>
 
             {/* Title */}
-            <h1 className="font-display text-[28px] font-light leading-[1.25] text-primary mb-2">
+            <motion.h1
+              variants={detailItem}
+              className="font-display text-[28px] font-light leading-[1.25] text-primary mb-2"
+            >
               {name}
-            </h1>
+            </motion.h1>
 
             {/* Tagline */}
-            <p className="font-display italic text-[15px] text-on-surface-variant mb-6">
+            <motion.p
+              variants={detailItem}
+              className="font-display italic text-[15px] text-on-surface-variant mb-6"
+            >
               {product.tagline || ""}
-            </p>
+            </motion.p>
 
             {/* Divider */}
-            <div className="w-full h-px bg-soft-beige mb-6" />
+            <motion.div
+              variants={detailItem}
+              className="w-full h-px bg-soft-beige mb-6"
+            />
 
             {/* Description */}
-            <div className="mb-6">
+            <motion.div variants={detailItem} className="mb-6">
               <h3 className="font-body text-[11px] tracking-[0.15em] uppercase text-primary mb-2">
                 Description
               </h3>
               <p className="font-body text-[13px] text-on-surface-variant leading-[1.75]">
                 {description}
               </p>
-            </div>
+            </motion.div>
 
             {/* Key Ingredients */}
             {skinTypes.length > 0 && (
-              <div className="mb-6">
+              <motion.div variants={detailItem} className="mb-6">
                 <h3 className="font-body text-[11px] tracking-[0.15em] uppercase text-primary mb-2">
                   Skin Types
                 </h3>
@@ -189,12 +247,12 @@ function ProductDetailPage() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Best For */}
             {concerns.length > 0 && (
-              <div className="mb-6">
+              <motion.div variants={detailItem} className="mb-6">
                 <h3 className="font-body text-[11px] tracking-[0.15em] uppercase text-primary mb-2">
                   Skin Concerns
                 </h3>
@@ -208,12 +266,12 @@ function ProductDetailPage() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* How To Use */}
             {storeUrl && (
-              <div className="mb-8">
+              <motion.div variants={detailItem} className="mb-8">
                 <h3 className="font-body text-[11px] tracking-[0.15em] uppercase text-primary mb-2">
                   Store Link
                 </h3>
@@ -225,12 +283,17 @@ function ProductDetailPage() {
                 >
                   {storeUrl}
                 </a>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Bottom Action Row */}
-          <div className="flex gap-3 px-[52px] py-5 border-t border-soft-beige bg-surface-bright sticky bottom-0">
+          <motion.div
+            className="flex gap-3 px-[52px] py-5 border-t border-soft-beige bg-surface-bright sticky bottom-0"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
+          >
             <button
               onClick={handleBuyNow}
               disabled={!storeUrl}
@@ -265,10 +328,10 @@ function ProductDetailPage() {
                 favorite
               </span>
             </button>
-          </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

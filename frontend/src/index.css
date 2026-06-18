@@ -231,6 +231,12 @@
     transition: background-color 5000s ease-in-out 0s;
   }
 
+  /* Admin table edit button */
+  .admin-edit-btn:hover {
+    color: #765933;
+    background-color: #faf2ec;
+  }
+
   /* Admin sidebar active state */
   .admin-nav-active {
     border-left: 2px solid #b8956a;

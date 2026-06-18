@@ -25,6 +25,11 @@ export async function updateMe(payload) {
   return response.data;
 }
 
+export async function deleteMe() {
+  const response = await axiosInstance.delete("/users/me");
+  return response.data;
+}
+
 export function isAuthenticated() {
   return Boolean(localStorage.getItem("token"));
 }

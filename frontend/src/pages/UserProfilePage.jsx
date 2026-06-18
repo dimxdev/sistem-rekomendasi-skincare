@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { resolveAssetUrl } from "../lib/asset";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { getMe, isAuthenticated, updateMe } from "../api/auth";
+import { getMe, isAuthenticated, updateMe, deleteMe } from "../api/auth";
 import { getFavorites } from "../api/favorites";
 
 const defaultUser = {
@@ -92,6 +92,9 @@ function UserProfilePage() {
   );
   const [focusedField, setFocusedField] = useState(null);
   const [signOutConfirm, setSignOutConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -181,6 +184,20 @@ function UserProfilePage() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/auth");
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteMe();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/");
+    } catch (err) {
+      setDeleteError(err?.response?.data?.error || "Gagal menghapus akun.");
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -407,13 +424,61 @@ function UserProfilePage() {
                   </div>
                 ))}
 
-                <div className="col-span-full pt-6">
+                <div className="col-span-full pt-6 flex flex-col gap-6">
                   <button
                     onClick={() => setEditMode(true)}
-                    className="border border-primary text-primary font-body text-[11px] tracking-[0.12em] uppercase px-8 py-3 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"
+                    className="border border-primary text-primary font-body text-[11px] tracking-[0.12em] uppercase px-8 py-3 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer w-fit"
                   >
                     EDIT PROFILE
                   </button>
+
+                  <div className="w-full h-px bg-outline-variant" />
+
+                  <div>
+                    <span className="font-body text-[10px] tracking-[0.2em] uppercase text-error block mb-1">
+                      DANGER ZONE
+                    </span>
+                    <h3 className="font-display text-[20px] text-on-surface mb-2">
+                      Delete Account
+                    </h3>
+                    <p className="font-body text-[13px] text-on-surface-variant mb-4">
+                      Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+
+                    {!deleteConfirm ? (
+                      <button
+                        onClick={() => setDeleteConfirm(true)}
+                        className="border border-error text-error font-body text-[11px] tracking-[0.12em] uppercase px-8 py-3 hover:bg-error hover:text-on-primary transition-colors cursor-pointer"
+                      >
+                        DELETE ACCOUNT
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        <p className="font-body text-[13px] text-error">
+                          Are you sure? This will permanently delete your account.
+                        </p>
+                        {deleteError && (
+                          <p className="font-body text-[12px] text-error">{deleteError}</p>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => { setDeleteConfirm(false); setDeleteError(""); }}
+                            disabled={isDeleting}
+                            className="border border-outline-variant text-on-surface-variant font-body text-[11px] tracking-[0.12em] uppercase px-6 py-2.5 hover:border-outline transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            CANCEL
+                          </button>
+                          <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            className="bg-error text-on-primary font-body text-[11px] tracking-[0.12em] uppercase px-6 py-2.5 hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                          >
+                            {isDeleting ? "DELETING..." : "YES, DELETE"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { isAuthenticated } from "../api/auth";
@@ -12,6 +13,43 @@ import {
   getSkinTypes,
 } from "../api/masterData";
 import { resolveAssetUrl } from "../lib/asset";
+
+const MotionLink = motion.create(Link);
+
+const EASE = [0.22, 1, 0.36, 1];
+
+const heroContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: EASE },
+  },
+};
+
+const gridContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.18, delayChildren: 0.1 },
+  },
+};
+
+const cardItem = {
+  hidden: { opacity: 0, y: 40, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.9, ease: EASE },
+  },
+};
 
 function HomePage() {
   const navigate = useNavigate();
@@ -224,28 +262,48 @@ function HomePage() {
       {/* HERO */}
       <section className="relative pt-[80px] min-h-[420px] flex items-end overflow-hidden">
         {/* Background */}
-        <div
+        <motion.div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
               "url('https://images.unsplash.com/photo-1629380823206-f7f5a7b7d2ab?w=1600&q=80')",
           }}
+          initial={{ scale: 1.12, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.6, ease: EASE }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
 
-        <div className="relative z-10 w-full text-center pb-16 px-8">
-          <span className="inline-block font-body text-[11px] tracking-[0.25em] uppercase text-secondary mb-4">
+        <motion.div
+          className="relative z-10 w-full text-center pb-16 px-8"
+          variants={heroContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.span
+            variants={heroItem}
+            className="inline-block font-body text-[11px] tracking-[0.25em] uppercase text-secondary mb-4"
+          >
             Curated Skincare
-          </span>
-          <h1 className="font-display text-[52px] leading-[1.15] tracking-[0.03em] text-primary mb-4">
+          </motion.span>
+          <motion.h1
+            variants={heroItem}
+            className="font-display text-[52px] leading-[1.15] tracking-[0.03em] text-primary mb-4"
+          >
             Discover Your Skin's
             <br />
             <em className="not-italic italic">Essential</em>
-          </h1>
-          <p className="font-body text-[15px] text-on-surface-variant max-w-[400px] mx-auto leading-relaxed">
+          </motion.h1>
+          <motion.p
+            variants={heroItem}
+            className="font-body text-[15px] text-on-surface-variant max-w-[400px] mx-auto leading-relaxed"
+          >
             A personalized selection of premium skincare from around the world
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          </motion.p>
+          <motion.div
+            variants={heroItem}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          >
             <Link
               to="/recommendations"
               className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 font-body text-[11px] tracking-[0.18em] uppercase text-on-primary transition-opacity hover:opacity-90"
@@ -255,9 +313,12 @@ function HomePage() {
             <span className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-bright px-5 py-3 font-body text-[11px] tracking-[0.18em] uppercase text-on-surface-variant">
               Weighted scoring
             </span>
-          </div>
-          <div className="w-10 h-px bg-outline-variant mx-auto mt-6" />
-        </div>
+          </motion.div>
+          <motion.div
+            variants={heroItem}
+            className="w-10 h-px bg-outline-variant mx-auto mt-6"
+          />
+        </motion.div>
       </section>
 
       {/* FILTER BAR */}
@@ -393,11 +454,21 @@ function HomePage() {
         {error && (
           <p className="font-body text-[13px] text-error mb-6">{error}</p>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto">
+        {!isLoading && (
+        <motion.div
+          key={`${page}-${totalSelected}-${searchValue}`}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto"
+          variants={gridContainer}
+          initial="hidden"
+          animate="show"
+        >
           {products.map((product) => (
-            <Link
+            <MotionLink
               key={product.id}
               to={`/product/${product.id}`}
+              variants={cardItem}
+              whileHover={{ y: -6 }}
+              transition={{ duration: 0.3, ease: EASE }}
               className="group bg-surface-container-lowest border border-outline-variant hover:border-outline transition-colors duration-300 flex flex-col cursor-pointer"
             >
               {/* Image */}
@@ -449,9 +520,10 @@ function HomePage() {
                   VIEW DETAILS
                 </span>
               </div>
-            </Link>
+            </MotionLink>
           ))}
-        </div>
+        </motion.div>
+        )}
 
         <div className="max-w-[1200px] mx-auto flex items-center justify-between mt-10">
           <button
