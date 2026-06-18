@@ -7,6 +7,7 @@ import { authMiddleware } from "../../middleware/auth.middleware.js";
 const router = express.Router();
 router.get("/users/me", authMiddleware, userController.getCurrentUser);
 router.put("/users/me", authMiddleware, userController.updateProfile);
+router.delete("/users/me", authMiddleware, userController.deleteMe);
 
 
 router.get("/admin/users", adminMiddleware, userController.getAllUsersAdmin);

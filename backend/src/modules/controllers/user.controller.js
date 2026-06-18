@@ -24,6 +24,15 @@ class UserController {
   }
 
   
+  async deleteMe(req, res) {
+    try {
+      await userService.deleteMe(req.user.id);
+      res.status(200).json({ message: "Akun berhasil dihapus" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async getAllUsersAdmin(req, res) {
     try {
       const users = await userService.getAllUsersAdmin();

@@ -34,6 +34,12 @@ class UserService {
     return updatedUser;
   }
 
+  async deleteMe(userId) {
+    const user = await userRepository.getUserById(userId);
+    if (!user) throw new Error("User tidak ditemukan!");
+    return userRepository.deleteUser(userId);
+  }
+
   async getAllUsersAdmin() {
     return userRepository.getAllUsers();
   }
