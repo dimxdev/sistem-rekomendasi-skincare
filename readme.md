@@ -96,7 +96,7 @@ Perintah ini otomatis:
 
 ## 3️⃣ Akses aplikasi
 
-* 🎨 Frontend → [http://localhost:8080](http://localhost:8080)
+* 🎨 Frontend → [http://localhost:5173](http://localhost:5173)
 * ⚙️ Backend → [http://localhost:3000](http://localhost:3000)
 
 Login admin hasil seed → **username:** `admin` — **password:** `admin123`
