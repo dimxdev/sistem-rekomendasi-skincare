@@ -52,7 +52,72 @@ Sistem rekomendasi skincare berbasis web menggunakan metode filtering berdasarka
 
 ---
 
-# ⚙️ Backend Setup
+# 🐳 Menjalankan dengan Docker (Rekomendasi)
+
+Cara paling mudah — **tidak perlu install Node.js maupun PostgreSQL**. Cukup punya [Docker Desktop](https://www.docker.com/products/docker-desktop/). Semua service (database, backend, frontend) otomatis berjalan dalam container.
+
+## 1️⃣ Siapkan file environment
+
+Salin file `.env.example` di **root project** menjadi `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Isinya sudah siap pakai. Untuk run **pertama kali**, set `SEED=true` agar data awal (admin, produk, dll) langsung terisi:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=skincare_db
+JWT_SECRET=supersecretjwt
+SEED=true
+VITE_API_URL=http://localhost:3000
+```
+
+> 💡 Cukup urus **satu file `.env` di root** ini saja. File `.env` di dalam `backend/` dan `frontend/` **tidak perlu disentuh** — itu hanya untuk mode dev non-Docker.
+
+---
+
+## 2️⃣ Build & jalankan semua container
+
+```bash
+docker compose up --build
+```
+
+Perintah ini otomatis:
+
+* 🗄️ Menyalakan PostgreSQL
+* ⚙️ Menjalankan migrasi Prisma
+* 🌱 Mengisi seed database (jika `SEED=true`)
+* 🎨 Build & serve frontend
+
+---
+
+## 3️⃣ Akses aplikasi
+
+* 🎨 Frontend → [http://localhost:8080](http://localhost:8080)
+* ⚙️ Backend → [http://localhost:3000](http://localhost:3000)
+
+Login admin hasil seed → **username:** `admin` — **password:** `admin123`
+
+---
+
+## 4️⃣ Setelah run pertama
+
+Kembalikan `SEED=false` di `.env` agar seed tidak dijalankan ulang. Untuk pemakaian sehari-hari:
+
+```bash
+docker compose up -d      # nyalakan (background)
+docker compose down       # matikan (data database TETAP aman)
+docker compose logs -f    # lihat log realtime
+```
+
+> ⚠️ Gunakan `docker compose down -v` **hanya** jika ingin mereset database dari nol (menghapus semua data). Ini juga wajib dilakukan jika mengubah `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`, karena kredensial hanya dibuat saat volume database pertama kali dibuat.
+
+---
+
+# ⚙️ Backend Setup (Manual / Tanpa Docker)
 
 ## 1️⃣ Masuk ke folder backend
 
@@ -146,7 +211,7 @@ http://localhost:3000
 
 ---
 
-# 🎨 Frontend Setup
+# 🎨 Frontend Setup (Manual / Tanpa Docker)
 
 ## 1️⃣ Masuk ke folder frontend
 
